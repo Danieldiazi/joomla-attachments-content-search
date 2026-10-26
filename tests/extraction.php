@@ -60,3 +60,39 @@ check(str_contains($extractor->extract($dir . '/fishing.pdf', 'fishing.pdf', $di
 file_put_contents($dir . '/empty.pdf', pdf(''));
 check($extractor->extract($dir . '/empty.pdf', 'empty.pdf', $dir) === '', 'PDF without text returns no indexable content');
 echo "$testCount extraction checks passed.\n";
+
+// Regression: a compressed image can expand far beyond the uploaded PDF size.
+$compressor = deflate_init(ZLIB_ENCODING_DEFLATE, ['level' => 9]);
+$imageStream = '';
+$chunk = str_repeat("\0", 1048576);
+for ($i = 0; $i < 192; $i++) {
+    $imageStream .= deflate_add($compressor, $chunk, ZLIB_NO_FLUSH);
+}
+$imageStream .= deflate_add($compressor, '', ZLIB_FINISH);
+unset($compressor, $chunk);
+$textStream = 'BT /F1 12 Tf 72 720 Td (pesca con imagen comprimida) Tj ET';
+$objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> /XObject << /Im1 6 0 R >> >> /Contents 5 0 R >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    "<< /Length " . strlen($textStream) . " >>\nstream\n" . $textStream . "\nendstream",
+    "<< /Type /XObject /Subtype /Image /Width 8192 /Height 8192 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /Length "
+        . strlen($imageStream) . " >>\nstream\n" . $imageStream . "\nendstream",
+];
+$pdfData = "%PDF-1.4\n";
+$offsets = [];
+foreach ($objects as $index => $object) {
+    $offsets[] = strlen($pdfData);
+    $pdfData .= ($index + 1) . " 0 obj\n" . $object . "\nendobj\n";
+}
+$xrefOffset = strlen($pdfData);
+$pdfData .= "xref\n0 7\n0000000000 65535 f \n";
+foreach ($offsets as $offset) {
+    $pdfData .= sprintf("%010d 00000 n \n", $offset);
+}
+$pdfData .= "trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n" . $xrefOffset . "\n%%EOF\n";
+file_put_contents($dir . '/compressed-image.pdf', $pdfData);
+unset($pdfData, $objects, $imageStream);
+check(str_contains($extractor->extract($dir . '/compressed-image.pdf', 'compressed-image.pdf', $dir), 'pesca con imagen'), 'Extracts text without inflating a 192 MB image under a 128 MB PHP limit');
+echo "$testCount total extraction checks passed.\n";

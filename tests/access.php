@@ -156,3 +156,10 @@ check(searchModel([1, 3])->getTotal() === 4, 'Real search immediately applies a 
 $components->getValue()['com_attachments']->getParams()->set('secure', 0);
 check(searchModel([1, 3])->getTotal() === 1, 'Real search hides all document entries when secure downloads are disabled');
 echo "$testCount total access and integration checks passed.\n";
+
+// Regression: core Adapter's default state query joins a.catid, which Attachments lacks.
+$adapter = (new ReflectionClass(Danieldiazi\Plugin\Finder\AttachmentsContent\Extension\AttachmentsContent::class))->newInstanceWithoutConstructor();
+$adapter->setDatabase($db);
+$stateQuery = (new ReflectionMethod($adapter, 'getStateQuery'))->invoke($adapter);
+check(count($db->setQuery($stateQuery)->loadObjectList()) === 5, 'Attachment state lookup works without an a.catid column');
+echo "$testCount total access and integration checks passed.\n";

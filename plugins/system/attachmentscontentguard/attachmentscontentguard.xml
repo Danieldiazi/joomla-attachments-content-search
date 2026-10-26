@@ -3,7 +3,7 @@
   <name>PLG_SYSTEM_ATTACHMENTSCONTENTGUARD</name>
   <author>Danieldiazi</author>
   <creationDate>2026-10</creationDate>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
   <license>GNU General Public License version 3 or later</license>
   <description>PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_DESC</description>
   <namespace path="src">Danieldiazi\Plugin\System\AttachmentsContentGuard</namespace>

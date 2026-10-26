@@ -2,7 +2,7 @@
 
 Búsqueda dentro de archivos **DOCX y PDF con texto** de [Attachments](https://github.com/jmcameron/attachments), integrada en la búsqueda inteligente de Joomla. Sin Apache Tika ni servicios externos.
 
-**0.1.0: primera versión para validar en un sitio de pruebas.** Las pruebas automatizadas comprueban extracción, consultas de permisos y el modelo real de búsqueda de Joomla. No sustituyen la prueba de instalación y funcionamiento en tu servidor.
+**0.1.1: primera versión para validar en un sitio de pruebas.** Las pruebas automatizadas comprueban extracción, consultas de permisos y el modelo real de búsqueda de Joomla. No sustituyen la prueba de instalación y funcionamiento en tu servidor.
 
 ## Requisitos
 
@@ -10,12 +10,13 @@ Búsqueda dentro de archivos **DOCX y PDF con texto** de [Attachments](https://g
 - Attachments **4.2.5** o posterior compatible; código revisado de 4.2.5.
 - PHP 8.3+ compatible con Joomla y extensiones ZIP, DOM y mbstring.
 - Descargas seguras de Attachments activadas.
+- Para PDF complejos: PHP con **512 MB de memoria recomendados**. Consulta la [guía de memoria PHP](docs/PHP_MEMORY.md).
 - Archivos locales dentro del directorio estándar de Attachments (JPATH_ROOT/attachments).
 - Adjuntos asociados a artículos o categorías de com_content.
 
 ## Instalación
 
-1. Descarga **pkg_attachmentscontentsearch-0.1.0.zip** de los artefactos de GitHub Actions, o constrúyelo siguiendo las instrucciones inferiores.
+1. Descarga **pkg_attachmentscontentsearch-0.1.1.zip** de los artefactos de GitHub Actions, o constrúyelo siguiendo las instrucciones inferiores.
 2. Instálalo desde **Sistema → Instalar → Extensiones**.
 3. Activa **descargas seguras** en Attachments. Comprueba que el servidor impide acceder directamente al directorio de archivos adjuntos. En Nginx/IIS puede ser necesaria una regla equivalente a la protección de Apache.
 4. En **Sistema → Plugins**, activa:
@@ -39,7 +40,7 @@ Una búsqueda de **pesca** puede encontrar un documento cuyo nombre no contiene 
 - Límite predeterminado: **20 MB por archivo**, configurable hasta 100 MB. XML DOCX descomprimido: 32 MB. Texto: 2 millones de caracteres, truncando el exceso.
 - La extracción se realiza en tu servidor. Los PDF complejos pueden necesitar más memoria/tiempo; usa indexación por consola para colecciones grandes.
 
-Se utiliza la tokenización de Smart Search (palabras, frases y sus opciones de coincidencia), no una búsqueda arbitraria por subcadenas.
+Se utiliza la tokenización de Smart Search (palabras, frases y sus opciones de coincidencia). Para que **personal** encuentre también **personales**, activa la coincidencia por inicio de palabra en las opciones de Joomla. Consulta la [guía de coincidencia de palabras](docs/SEARCH_BEHAVIOUR.md).
 
 ## Permisos y privacidad
 
@@ -74,7 +75,7 @@ Los cambios externos de contenido requieren reindexar; los permisos y publicaci�
     composer install --no-dev --prefer-dist
     php tools/build.php
 
-El instalador se genera en dist/pkg_attachmentscontentsearch-0.1.0.zip con sus dependencias. No hace falta Composer en el servidor de destino.
+El instalador se genera en dist/pkg_attachmentscontentsearch-0.1.1.zip con sus dependencias. No hace falta Composer en el servidor de destino.
 
 ## Pruebas
 

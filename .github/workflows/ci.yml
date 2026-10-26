@@ -31,9 +31,9 @@ jobs:
       - run: php tests/extraction.php
       - run: php tests/access.php ../joomla-cms
       - run: php tools/build.php
-      - run: php tests/package.php dist/pkg_attachmentscontentsearch-0.1.0.zip
+      - run: php tests/package.php dist/pkg_attachmentscontentsearch-0.1.1.zip
       - uses: actions/upload-artifact@v4
         if: matrix.php == '8.3'
         with:
-          name: pkg_attachmentscontentsearch-0.1.0
-          path: dist/pkg_attachmentscontentsearch-0.1.0.zip
+          name: pkg_attachmentscontentsearch-0.1.1
+          path: dist/pkg_attachmentscontentsearch-0.1.1.zip

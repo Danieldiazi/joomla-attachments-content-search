@@ -6,6 +6,7 @@ use DOMDocument;
 use DOMXPath;
 use RuntimeException;
 use Smalot\PdfParser\Parser;
+use Smalot\PdfParser\Config;
 use ZipArchive;
 
 final class TextExtractor
@@ -43,7 +44,7 @@ final class TextExtractor
         }
         $text = match (strtolower(pathinfo($originalName, PATHINFO_EXTENSION))) {
             'docx' => $this->docx($path),
-            'pdf' => (new Parser())->parseFile($path)->getText(),
+            'pdf' => $this->pdf($path),
             default => throw new RuntimeException('UNSUPPORTED_FORMAT'),
         };
         $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
@@ -51,6 +52,24 @@ final class TextExtractor
         return trim(mb_substr($text, 0, $this->maxCharacters, 'UTF-8'));
     }
 
+    private function pdf(string $path): string
+    {
+        $config = new Config();
+        // Search needs text, not decoded image streams, which can exceed PHP memory.
+        $config->setRetainImageContent(false);
+        $config->setDecodeMemoryLimit(8 * 1024 * 1024);
+        $config->setMaxNestingDepth(256);
+        $parser = new Parser([], $config);
+        $document = null;
+        try {
+            $document = $parser->parseFile($path);
+            return $document->getText();
+        } finally {
+            // PDF objects reference their document and each other. Release cycles between files.
+            unset($document, $parser);
+            gc_collect_cycles();
+        }
+    }
     private function docx(string $path): string
     {
         $zip = new ZipArchive();

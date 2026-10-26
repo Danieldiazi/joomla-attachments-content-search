@@ -1,5 +1,5 @@
 <?php
-$path = $argv[1] ?? dirname(__DIR__) . '/dist/pkg_attachmentscontentsearch-0.1.0.zip';
+$path = $argv[1] ?? dirname(__DIR__) . '/dist/pkg_attachmentscontentsearch-0.1.1.zip';
 $zip = new ZipArchive();
 if ($zip->open($path) !== true) {
     throw new RuntimeException('Cannot open installer');

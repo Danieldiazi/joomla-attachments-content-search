@@ -55,6 +55,30 @@ final class AttachmentsContent extends Adapter implements SubscriberInterface
             ->from($db->quoteName($this->table, 'a'));
     }
 
+    /** Attachments has no category foreign key; core's default a.catid join is invalid. */
+    protected function getStateQuery()
+    {
+        return $this->getDatabase()->createQuery()
+            ->select('a.id, a.state, a.access')->from('#__attachments AS a');
+    }
+
+    public function onStartIndex()
+    {
+        try {
+            return parent::onStartIndex();
+        } catch (\Throwable $error) {
+            throw new \RuntimeException('Attachments Content Search start: ' . $error->getMessage(), 0, $error);
+        }
+    }
+
+    public function onBuildIndex()
+    {
+        try {
+            return parent::onBuildIndex();
+        } catch (\Throwable $error) {
+            throw new \RuntimeException('Attachments Content Search batch: ' . $error->getMessage(), 0, $error);
+        }
+    }
     protected function index(Result $item)
     {
         $id = (int) $item->id;

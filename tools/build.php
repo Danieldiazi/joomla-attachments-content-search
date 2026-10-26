@@ -34,7 +34,7 @@ foreach (['system/attachmentscontentguard', 'finder/attachmentscontent'] as $chi
     $zip->close();
     $children[] = $path;
 }
-$output = $dist . '/pkg_attachmentscontentsearch-0.1.0.zip';
+$output = $dist . '/pkg_attachmentscontentsearch-0.1.1.zip';
 $zip = new ZipArchive();
 if ($zip->open($output, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
     throw new RuntimeException('Cannot create package archive');
