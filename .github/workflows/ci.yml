@@ -28,10 +28,14 @@ jobs:
           composer install --no-dev --prefer-dist --no-interaction --no-scripts --working-dir=../joomla-cms
       - name: PHP syntax
         run: find plugins package tools tests -name '*.php' -print0 | xargs -0 -n1 php -l
-      - run: php tests/extraction.php
+      - run: php -d memory_limit=128M tests/extraction.php
       - run: php tests/access.php ../joomla-cms
       - run: php tools/build.php
       - run: php tests/package.php dist/pkg_attachmentscontentsearch-0.1.1.zip
+      - name: Test release tag version propagation
+        run: |
+          php tools/build.php --version=v9.8.7-rc.1 --output-dir=build/release-test
+          php tests/package.php build/release-test/pkg_attachmentscontentsearch-9.8.7-rc.1.zip
       - uses: actions/upload-artifact@v4
         if: matrix.php == '8.3'
         with:

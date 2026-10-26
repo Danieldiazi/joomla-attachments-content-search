@@ -8,6 +8,10 @@ $manifest = simplexml_load_string($zip->getFromName('pkg_attachmentscontentsearc
 if ((string) $manifest['type'] !== 'package') {
     throw new RuntimeException('Invalid package manifest');
 }
+$version = (string) $manifest->version;
+if (basename($path) !== 'pkg_attachmentscontentsearch-' . $version . '.zip') {
+    throw new RuntimeException('Package filename and manifest versions differ');
+}
 $temp = dirname(__DIR__) . '/build/package-test';
 @mkdir($temp, 0775, true);
 foreach ($manifest->files->file as $file) {
@@ -23,6 +27,9 @@ foreach ($manifest->files->file as $file) {
     }
     $id = (string) $file['id'];
     $pluginManifest = simplexml_load_string($child->getFromName($id . '.xml'));
+    if ((string) $pluginManifest->version !== $version) {
+        throw new RuntimeException('Child plugin version differs from package');
+    }
     foreach ($pluginManifest->files->folder as $folder) {
         $found = false;
         for ($i = 0; $i < $child->numFiles; $i++) {

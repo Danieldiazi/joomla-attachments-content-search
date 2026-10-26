@@ -1,0 +1,47 @@
+name: Build release installer
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: zip, dom, mbstring, pdo_sqlite, sqlite3, gd, ldap, sodium
+          tools: composer:v2
+          coverage: none
+      - run: composer install --no-dev --prefer-dist --no-interaction
+      - name: Prepare Joomla integration environment
+        run: |
+          git clone --depth 1 --branch 6.2.0 https://github.com/joomla/joomla-cms.git ../joomla-cms
+          composer install --no-dev --prefer-dist --no-interaction --no-scripts --working-dir=../joomla-cms
+      - name: Validate sources and access checks
+        run: |
+          find plugins package tools tests -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -d memory_limit=128M tests/extraction.php
+          php tests/access.php ../joomla-cms
+      - name: Build versioned installer
+        id: build
+        run: |
+          package_path=$(php tools/build.php --version="$RELEASE_TAG")
+          php tests/package.php "$package_path"
+          echo "package_path=$package_path" >> "$GITHUB_OUTPUT"
+      - name: Attach installer to published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE_PATH: ${{ steps.build.outputs.package_path }}
+        run: gh release upload "$RELEASE_TAG" "$PACKAGE_PATH" --repo "$GITHUB_REPOSITORY" --clobber
+

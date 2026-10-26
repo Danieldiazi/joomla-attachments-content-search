@@ -14,9 +14,11 @@ Búsqueda dentro de archivos **DOCX y PDF con texto** de [Attachments](https://g
 - Archivos locales dentro del directorio estándar de Attachments (JPATH_ROOT/attachments).
 - Adjuntos asociados a artículos o categorías de com_content.
 
+Consulta primero la [guía completa de instalación y configuración](docs/CONFIGURATION.md): incluye formatos y MIME permitidos, php.ini, seguridad, plugins, grupos, publicación, indexado y módulo de búsqueda.
+
 ## Instalación
 
-1. Descarga **pkg_attachmentscontentsearch-0.1.1.zip** de los artefactos de GitHub Actions, o constrúyelo siguiendo las instrucciones inferiores.
+1. Descarga el instalador **pkg_attachmentscontentsearch-VERSION.zip** de los Assets de la [release](https://github.com/Danieldiazi/joomla-attachments-content-search/releases), o constrúyelo siguiendo las instrucciones inferiores. No uses los archivos Source code como instalador.
 2. Instálalo desde **Sistema → Instalar → Extensiones**.
 3. Activa **descargas seguras** en Attachments. Comprueba que el servidor impide acceder directamente al directorio de archivos adjuntos. En Nginx/IIS puede ser necesaria una regla equivalente a la protección de Apache.
 4. En **Sistema → Plugins**, activa:
@@ -69,6 +71,10 @@ Para importaciones o cambios efectuados directamente en disco/base de datos:
     php cli/joomla.php finder:index
 
 Los cambios externos de contenido requieren reindexar; los permisos y publicación se comprueban en cada búsqueda.
+
+## Generar instaladores con Releases
+
+Al publicar una release, la acción **Build release installer** genera y adjunta automáticamente el ZIP de Joomla. Usa etiquetas como **v0.1.2**; esa versión se aplica al nombre del ZIP y a sus manifiestos internos. [Todos los pasos para publicar una release](docs/RELEASING.md).
 
 ## Construir el ZIP
 
