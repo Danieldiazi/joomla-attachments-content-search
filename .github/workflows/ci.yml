@@ -1,0 +1,39 @@
+name: Test and package
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: zip, dom, mbstring, pdo_sqlite, sqlite3, gd, ldap, sodium
+          tools: composer:v2
+          coverage: none
+      - run: composer install --no-dev --prefer-dist --no-interaction
+      - name: Fetch Joomla 6.2.0 integration environment
+        run: |
+          git clone --depth 1 --branch 6.2.0 https://github.com/joomla/joomla-cms.git ../joomla-cms
+          composer install --no-dev --prefer-dist --no-interaction --no-scripts --working-dir=../joomla-cms
+      - name: PHP syntax
+        run: find plugins package tools tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: php tests/extraction.php
+      - run: php tests/access.php ../joomla-cms
+      - run: php tools/build.php
+      - run: php tests/package.php dist/pkg_attachmentscontentsearch-0.1.0.zip
+      - uses: actions/upload-artifact@v4
+        if: matrix.php == '8.3'
+        with:
+          name: pkg_attachmentscontentsearch-0.1.0
+          path: dist/pkg_attachmentscontentsearch-0.1.0.zip

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="package" method="upgrade">
+  <name>Attachments Content Search</name>
+  <packagename>attachmentscontentsearch</packagename>
+  <author>Danieldiazi</author>
+  <version>0.1.0</version>
+  <creationDate>2026-10</creationDate>
+  <license>GNU General Public License version 3 or later</license>
+  <description>DOCX and PDF full-text search for Attachments with live access checks. Enable both included plugins after installation.</description>
+  <scriptfile>script.php</scriptfile>
+  <blockChildUninstall>true</blockChildUninstall>
+  <files folder="packages">
+    <file type="plugin" id="attachmentscontentguard" group="system">plg_system_attachmentscontentguard.zip</file>
+    <file type="plugin" id="attachmentscontent" group="finder">plg_finder_attachmentscontent.zip</file>
+  </files>
+</extension>

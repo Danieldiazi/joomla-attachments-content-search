@@ -1,0 +1,17 @@
+{
+  "name": "danieldiazi/joomla-attachments-content-search",
+  "description": "Permission-aware DOCX and PDF full-text search for Joomla Attachments",
+  "type": "joomla-package",
+  "license": "GPL-3.0-or-later",
+  "require": {
+    "php": ">=8.3",
+    "ext-dom": "*",
+    "ext-mbstring": "*",
+    "ext-zip": "*",
+    "smalot/pdfparser": "^2.12"
+  },
+  "config": {
+    "sort-packages": true,
+    "allow-plugins": {}
+  }
+}

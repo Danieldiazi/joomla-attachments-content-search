@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="plugin" group="finder" method="upgrade">
+  <name>PLG_FINDER_ATTACHMENTSCONTENT</name>
+  <author>Danieldiazi</author>
+  <creationDate>2026-10</creationDate>
+  <version>0.1.0</version>
+  <license>GNU General Public License version 3 or later</license>
+  <description>PLG_FINDER_ATTACHMENTSCONTENT_DESC</description>
+  <namespace path="src">Danieldiazi\Plugin\Finder\AttachmentsContent</namespace>
+  <files>
+    <folder plugin="attachmentscontent">services</folder>
+    <folder>src</folder>
+    <folder>vendor</folder>
+  </files>
+  <languages>
+    <language tag="en-GB">language/en-GB/plg_finder_attachmentscontent.ini</language>
+    <language tag="en-GB">language/en-GB/plg_finder_attachmentscontent.sys.ini</language>
+    <language tag="es-ES">language/es-ES/plg_finder_attachmentscontent.ini</language>
+    <language tag="es-ES">language/es-ES/plg_finder_attachmentscontent.sys.ini</language>
+  </languages>
+  <config><fields name="params"><fieldset name="basic">
+    <field name="max_file_mb" type="number" label="PLG_FINDER_ATTACHMENTSCONTENT_MAX_MB" default="20" min="1" max="100" filter="integer"/>
+  </fieldset></fields></config>
+</extension>
