@@ -31,6 +31,27 @@ Consulta primero la [guía completa de instalación y configuración](docs/CONFI
 
 El paquete no se activa automáticamente y muestra un recordatorio de estos pasos. No modifica el código de Joomla ni de Attachments.
 
+## Librerías incluidas y funcionamiento local
+
+El ZIP instalable incluye los dos plugins y las librerías PHP necesarias:
+
+- **Smalot PDFParser**: extrae el texto de los PDF.
+- **Symfony Polyfill Mbstring**: dependencia de PDFParser para el tratamiento de texto.
+
+Son archivos PHP: **no necesitas instalar ningún archivo `.exe`, programa adicional ni servicio externo**. La extracción se ejecuta en tu servidor; los documentos no se envían a un servicio de terceros para procesarlos.
+
+Al instalar el ZIP desde Joomla se copian también estas librerías dentro de `plugins/finder/attachmentscontent/vendor/`. No necesitas Composer en el servidor de destino. Joomla, Attachments, PHP y las extensiones PHP indicadas en **Requisitos** deben estar instalados previamente; el paquete no los instala.
+
+La carpeta `vendor/` no aparece en el repositorio porque está excluida en `.gitignore`. Composer la genera al preparar el instalador y el proceso de construcción la incorpora al ZIP. Por eso debes descargar el **ZIP instalable de la release**, no los archivos **Source code** de GitHub.
+
+## Desinstalación
+
+En **Sistema → Gestionar → Extensiones**, busca y desinstala el paquete **Attachments Content Search**. Desinstala el paquete completo, que agrupa los dos plugins.
+
+Joomla elimina los plugins del paquete y sus archivos, incluida la carpeta `vendor/` con PDFParser y sus dependencias. No necesitas borrar las librerías manualmente. Esto no desinstala el componente Attachments ni borra tus documentos adjuntos, y tampoco elimina PHP ni sus extensiones del servidor.
+
+La eliminación de los archivos del complemento no equivale a vaciar el índice de búsqueda inteligente ni a limpiar todos los datos de la cola. Si quieres retirar también el texto indexado, vacía y reconstruye el índice de Smart Search para las extensiones que sigas utilizando.
+
 ## Qué encuentra
 
 Una búsqueda de **pesca** puede encontrar un documento cuyo nombre no contiene esa palabra, pero cuyo interior sí la contiene. Solo se devuelven adjuntos publicados que el usuario pueda leer.
