@@ -103,12 +103,37 @@ final class AttachmentsContent extends Adapter implements SubscriberInterface
 
     protected function index(Result $item)
     {
+        $db = $this->getDatabase();
+        $base = rtrim((string) $this->getApplication()->get('tmp_path'), '/\\')
+            . '/acs-' . hash('sha256', JPATH_ROOT . $db->getPrefix());
+        // The CLI child already owns this lock; normal web/event indexing acquires it here.
+        $lock = $this->queueMode ? null : new \Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\FileLock($base . '-worker.lock');
+        try {
+            $this->indexDocument($item);
+        } finally {
+            (new \Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\SelectionSynchronizer($db, $base . '-worker.lock'))
+                ->synchronize(true);
+            if ($this->queueMode && $this->queueOutcome === 'done') {
+                $access = $db->setQuery('SELECT access FROM #__attachments WHERE id = ' . (int) $item->id)->loadResult();
+                if ($access === null || !\Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\IndexSelection::load($db)->allows((int) $access)) {
+                    $this->queueOutcome = 'excluded';
+                }
+            }
+        }
+    }
+
+    private function indexDocument(Result $item)
+    {
         $id = (int) $item->id;
         if (!$id) {
             return;
         }
         // Remove first so a replacement which fails extraction cannot leave old text searchable.
         $this->remove($id);
+        if (!\Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\IndexSelection::load($this->getDatabase())->allows((int) $item->access)) {
+            $this->queueOutcome = 'excluded';
+            return;
+        }
         if ($item->uri_type !== 'file' || $item->parent_type !== 'com_content'
             || !in_array($item->parent_entity, ['article', 'category'], true)
             || (int) $item->state !== 1
@@ -149,6 +174,11 @@ final class AttachmentsContent extends Adapter implements SubscriberInterface
         $result->mime = strtolower(pathinfo($item->filename, PATHINFO_EXTENSION)) === 'pdf'
             ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         $result->addTaxonomy('Type', 'Attachment document');
+        $access = $this->getDatabase()->setQuery('SELECT access FROM #__attachments WHERE id = ' . $id)->loadResult();
+        if ($access === null || !\Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\IndexSelection::load($this->getDatabase())->allows((int) $access)) {
+            $this->queueOutcome = 'excluded';
+            return;
+        }
         $this->indexer->index($result);
         $this->queueOutcome = 'done';
     }

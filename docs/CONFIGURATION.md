@@ -45,6 +45,10 @@ En **Sistema → Plugins**:
 
 El paquete no habilita automáticamente los plugins.
 
+### Elegir niveles que entran en el buscador
+
+Desde 2026.10.2, el plugin Finder permite indexar **Todos los niveles** o **Solo los niveles seleccionados**. Al guardar, se retiran los excluidos del índice y se sincroniza la cola. Los nuevos incluidos quedan pendientes de procesar. [Configuración, limpieza y comportamiento durante una indexación](ACCESS_LEVELS.md).
+
 ## 6. Configurar grupos y niveles de acceso
 
 1. Crea o revisa tus grupos en **Usuarios → Grupos**.
@@ -84,7 +88,7 @@ El protector desactiva las sugerencias automáticas y las propuestas de búsqued
 3. Pulsa **Índice** y espera a que termine.
 4. Comprueba que aparece el tipo **Attachment document** y los títulos de tus documentos.
 
-Para PDF, configura inicialmente el tamaño del lote de Finder en **5**, o **1** si son pesados. Un archivo complejo puede superar por sí solo el tiempo o la memoria disponibles. Para miles de archivos, utiliza la [cola persistente con reanudación e informe de fallos](INDEXING.md), disponible desde 0.2.0.
+Para PDF, configura inicialmente el tamaño del lote de Finder en **5**, o **1** si son pesados. Un archivo complejo puede superar por sí solo el tiempo o la memoria disponibles. Para miles de archivos, utiliza la [cola persistente con reanudación e informe de fallos](INDEXING.md), disponible desde 2026.10.1.
 
 Los archivos existentes necesitan esta primera indexación. Las nuevas subidas, sustituciones, borrados y cambios de estado se actualizan mediante los eventos de Attachments cuando está activo el plugin de contenido de Smart Search.
 

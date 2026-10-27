@@ -18,11 +18,56 @@ final class Guard extends CMSPlugin implements SubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
+            'onExtensionAfterSave' => 'onExtensionAfterSave',
+            'onAfterInitialise' => 'onAfterInitialise',
             'application.before_execute' => 'registerQueueCommands',
             'onPageCacheSetCaching' => 'onPageCacheSetCaching',
             'onAfterExtensionBoot' => 'onAfterExtensionBoot',
             'onAfterRoute' => ['onAfterRoute', 1000],
         ];
+    }
+
+    public function onExtensionAfterSave(Event $event): void
+    {
+        $record = $event->getArgument('subject');
+        if (!$record || ($record->type ?? '') !== 'plugin' || ($record->folder ?? '') !== 'finder'
+            || ($record->element ?? '') !== 'attachmentscontent') {
+            return;
+        }
+        $queue = new \Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\Queue($this->getDatabase());
+        $queue->install();
+        $complete = $this->selectionSynchronizer()->synchronize();
+        if (!$complete) {
+            $this->getApplication()->enqueueMessage(
+                'Attachments Content Search: the new access-level selection is active. Index cleanup will finish after the current file, or on the next administrator request.',
+                'notice'
+            );
+        }
+    }
+
+    public function onAfterInitialise(): void
+    {
+        $app = $this->getApplication();
+        if (!$app->isClient('administrator') || !$app->getIdentity() || !$app->getIdentity()->authorise('core.manage', 'com_plugins')) {
+            return;
+        }
+        // Finish cleanup left pending by an interrupted worker or an earlier settings request.
+        try {
+            $sync = $this->selectionSynchronizer();
+            if ($sync->needsSync()) {
+                $sync->synchronize();
+            }
+        } catch (\Throwable $error) {
+            $app->enqueueMessage('Attachments Content Search: access-level index cleanup is pending. Check the database and temporary directory, then run attachments:index sync.', 'warning');
+        }
+    }
+
+    private function selectionSynchronizer(): \Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\SelectionSynchronizer
+    {
+        $db = $this->getDatabase();
+        $base = rtrim((string) $this->getApplication()->get('tmp_path'), '/\\')
+            . '/acs-' . hash('sha256', JPATH_ROOT . $db->getPrefix());
+        return new \Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\SelectionSynchronizer($db, $base . '-worker.lock');
     }
 
     public function registerQueueCommands(): void

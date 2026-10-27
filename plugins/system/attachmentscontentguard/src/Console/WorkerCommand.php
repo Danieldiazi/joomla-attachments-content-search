@@ -40,12 +40,15 @@ final class WorkerCommand extends AbstractCommand
             return match ($outcome) {
                 'done' => 0,
                 'skipped' => 10,
+                'excluded' => 11,
                 'empty_text' => 21,
                 default => 22,
             };
         } catch (\Throwable $error) {
             // Exception text can contain paths or document text; never echo it.
             return $error->getMessage() === 'ACS_EXTRACTION_FAILED' ? 20 : 22;
+        } finally {
+            (new \Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\SelectionSynchronizer($this->db, $base . '-worker.lock'))->synchronize(true);
         }
     }
 }

@@ -54,6 +54,7 @@ final class ProcessRunner
         return match ($code) {
             0 => ['done', ''],
             10 => ['skipped', ''],
+            11 => ['excluded', 'access_excluded'],
             20 => ['failed', 'extraction_failed'],
             21 => ['failed', 'empty_text'],
             22 => ['failed', 'index_failed'],

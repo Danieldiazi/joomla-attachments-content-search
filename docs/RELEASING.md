@@ -6,11 +6,11 @@ El flujo **Build release installer** se ejecuta cuando se publica una release. C
 
 1. Sube los cambios a main y espera a que **Test and package** termine correctamente.
 2. En GitHub, abre **Releases → Draft a new release**.
-3. Crea una etiqueta con tres números, por ejemplo **v0.1.2**, apuntando al commit que deseas distribuir. También se admiten etiquetas de prueba como v0.1.2-rc.1.
+3. Usa la nomenclatura AAAA.MM.N, con tres números, y crea una etiqueta, por ejemplo **v2026.10.2**, apuntando al commit que deseas distribuir. También se admiten etiquetas de prueba como v2026.10.2-rc.1.
 4. El commit de la etiqueta debe contener el flujo release.yml y el generador actualizado tools/build.php.
 5. Escribe el título y las notas, y pulsa **Publish release**. Guardar un borrador no genera el instalador.
 6. En **Actions**, espera a que finalice **Build release installer**.
-7. Vuelve a la release y descarga **pkg_attachmentscontentsearch-0.1.2.zip** de Assets. No uses los ZIP/TAR automáticos de Source code para instalar en Joomla.
+7. Vuelve a la release y descarga **pkg_attachmentscontentsearch-2026.10.2.zip** de Assets. No uses los ZIP/TAR automáticos de Source code para instalar en Joomla.
 
 ## Qué hace la acción
 
@@ -30,8 +30,8 @@ Si falla, abre el trabajo desde Actions, corrige el problema y vuelve a ejecutar
 
 ```sh
 composer install --no-dev --prefer-dist
-php tools/build.php --version=v0.1.2
-php tests/package.php dist/pkg_attachmentscontentsearch-0.1.2.zip
+php tools/build.php --version=v2026.10.2
+php tests/package.php dist/pkg_attachmentscontentsearch-2026.10.2.zip
 ```
 
 Sin --version, el generador utiliza la versión del manifiesto del paquete. La opción --output-dir permite elegir otra carpeta de salida.

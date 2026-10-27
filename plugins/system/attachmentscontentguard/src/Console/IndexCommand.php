@@ -19,7 +19,7 @@ final class IndexCommand extends AbstractCommand
     public function __construct(private DatabaseInterface $db) { parent::__construct(); }
     protected function configure(): void
     {
-        $this->setDescription('Persistent attachment indexing queue: enqueue, run, status, failures, retry, refresh.');
+        $this->setDescription('Persistent attachment indexing queue: enqueue, run, status, failures, retry, refresh, sync.');
         $this->addArgument('action', InputArgument::OPTIONAL, 'Queue action', 'status');
         $this->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Maximum files per invocation', '100');
         $this->addOption('timeout', null, InputOption::VALUE_REQUIRED, 'Wall-clock seconds per file', '60');
@@ -28,7 +28,7 @@ final class IndexCommand extends AbstractCommand
     protected function doExecute(InputInterface $input, OutputInterface $output): int
     {
         $action = $input->getArgument('action');
-        if (!in_array($action, ['enqueue', 'run', 'status', 'failures', 'retry', 'refresh'], true)) {
+        if (!in_array($action, ['enqueue', 'run', 'status', 'failures', 'retry', 'refresh', 'sync'], true)) {
             throw new \InvalidArgumentException('Unknown queue action.');
         }
         $limit = filter_var($input->getOption('limit'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 10000]]);
@@ -45,6 +45,8 @@ final class IndexCommand extends AbstractCommand
         // Never unlink lock files: replacing a locked inode breaks mutual exclusion.
         $supervisor = in_array($action, ['status', 'failures'], true) ? null : new FileLock($base . '-supervisor.lock');
         $queue->install();
+        $sync = new \Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\SelectionSynchronizer($this->db, $base . '-worker.lock');
+        $sync->synchronize(false, in_array($action, ['sync', 'enqueue', 'refresh'], true));
         if ($action === 'status') {
             $output->writeln(json_encode($queue->counts(), JSON_THROW_ON_ERROR));
             return 0;
@@ -60,8 +62,10 @@ final class IndexCommand extends AbstractCommand
         unset($workerProbe);
         $queue->recoverInterrupted();
         switch ($action) {
+            case 'sync':
+                break;
             case 'enqueue':
-                $output->writeln('Added: ' . $queue->enqueue());
+                $output->writeln('Added: ' . $queue->enqueue(\Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\IndexSelection::load($this->db)));
                 break;
             case 'retry':
                 $queue->retry();
@@ -82,6 +86,7 @@ final class IndexCommand extends AbstractCommand
                         JPATH_ROOT . '/cli/joomla.php', 'attachments:index-worker', (string) $id,
                     ], $timeout);
                     $queue->finish($id, $status, $error);
+                    $sync->synchronize();
                     $output->writeln('ID ' . $id . ': ' . $status . ($error ? ' (' . $error . ')' : ''));
                 }
                 break;

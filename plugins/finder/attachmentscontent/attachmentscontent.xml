@@ -3,7 +3,7 @@
   <name>PLG_FINDER_ATTACHMENTSCONTENT</name>
   <author>Danieldiazi</author>
   <creationDate>2026-10</creationDate>
-  <version>0.2.0</version>
+  <version>2026.10.2</version>
   <license>GNU General Public License version 3 or later</license>
   <description>PLG_FINDER_ATTACHMENTSCONTENT_DESC</description>
   <namespace path="src">Danieldiazi\Plugin\Finder\AttachmentsContent</namespace>
@@ -19,6 +19,11 @@
     <language tag="es-ES">language/es-ES/plg_finder_attachmentscontent.sys.ini</language>
   </languages>
   <config><fields name="params"><fieldset name="basic">
+    <field name="index_access_mode" type="list" label="PLG_FINDER_ATTACHMENTSCONTENT_SCOPE" description="PLG_FINDER_ATTACHMENTSCONTENT_SCOPE_DESC" default="all" filter="cmd" validate="options">
+      <option value="all">PLG_FINDER_ATTACHMENTSCONTENT_SCOPE_ALL</option>
+      <option value="selected">PLG_FINDER_ATTACHMENTSCONTENT_SCOPE_SELECTED</option>
+    </field>
+    <field name="index_access_levels" type="accesslevel" label="PLG_FINDER_ATTACHMENTSCONTENT_LEVELS" description="PLG_FINDER_ATTACHMENTSCONTENT_LEVELS_DESC" multiple="true" default="" filter="intarray" showon="index_access_mode:selected"/>
     <field name="max_file_mb" type="number" label="PLG_FINDER_ATTACHMENTSCONTENT_MAX_MB" default="20" min="1" max="100" filter="integer"/>
   </fieldset></fields></config>
 </extension>

@@ -10,6 +10,20 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: acs_test_password
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: acs_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -pacs_test_password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     strategy:
       matrix:
         php: ['8.3', '8.4']
@@ -18,7 +32,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: zip, dom, mbstring, pdo_sqlite, sqlite3, gd, ldap, sodium
+          extensions: zip, dom, mbstring, pdo_sqlite, sqlite3, mysqli, gd, ldap, sodium
           tools: composer:v2
           coverage: none
       - run: composer install --no-dev --prefer-dist --no-interaction
@@ -31,8 +45,13 @@ jobs:
       - run: php -d memory_limit=128M tests/extraction.php
       - run: php tests/access.php ../joomla-cms
       - run: php tests/queue.php ../joomla-cms
+      - run: php tests/selection.php ../joomla-cms
+      - name: Scope reconciliation on MySQL
+        env:
+          ACS_MYSQL_PASSWORD: acs_test_password
+        run: php tests/selection.php ../joomla-cms mysql
       - run: php tools/build.php
-      - run: php tests/package.php dist/pkg_attachmentscontentsearch-0.2.0.zip
+      - run: php tests/package.php dist/pkg_attachmentscontentsearch-2026.10.2.zip
       - name: Test release tag version propagation
         run: |
           php tools/build.php --version=v9.8.7-rc.1 --output-dir=build/release-test
@@ -40,5 +59,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: matrix.php == '8.3'
         with:
-          name: pkg_attachmentscontentsearch-0.2.0
-          path: dist/pkg_attachmentscontentsearch-0.2.0.zip
+          name: pkg_attachmentscontentsearch-2026.10.2
+          path: dist/pkg_attachmentscontentsearch-2026.10.2.zip

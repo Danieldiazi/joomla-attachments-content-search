@@ -18,7 +18,7 @@ try {
     $db->transactionCommit();
     $queue = new Queue($db);
     $queue->install();
-    check($queue->enqueue() === 1005, 'Enqueue more than two keyset pages without losing records');
+    check($queue->enqueue() === 1005, 'Enqueue over a thousand jobs without losing records');
     check($queue->enqueue() === 0, 'Repeated enqueue does not duplicate jobs');
     check($queue->counts()['pending'] === 1005, 'Persist initial progress');
     $id = $queue->claim();

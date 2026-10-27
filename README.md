@@ -2,7 +2,7 @@
 
 Búsqueda dentro de archivos **DOCX y PDF con texto** de [Attachments](https://github.com/jmcameron/attachments), integrada en la búsqueda inteligente de Joomla. Sin Apache Tika ni servicios externos.
 
-**0.2.0: incluye cola persistente de indexación por consola.** Las pruebas automatizadas comprueban extracción, consultas de permisos y el modelo real de búsqueda de Joomla. No sustituyen la prueba de instalación y funcionamiento en tu servidor.
+**2026.10.2: selección de niveles de acceso con sincronización del índice y la cola.** Las pruebas automatizadas comprueban extracción, consultas de permisos y el modelo real de búsqueda de Joomla. No sustituyen la prueba de instalación y funcionamiento en tu servidor.
 
 ## Requisitos
 
@@ -72,20 +72,24 @@ Para importaciones o cambios efectuados directamente en disco/base de datos:
 
 Los cambios externos de contenido requieren reindexar; los permisos y publicación se comprueban en cada búsqueda.
 
+## Niveles de acceso que se indexan
+
+Configura en el plugin Finder **Todos los niveles** o **Solo los niveles seleccionados**. Al guardar, se ocultan los excluidos, se retiran del índice y se actualiza la cola. Los nuevos incluidos quedan pendientes. Una lista vacía en el modo de selección no indexa ningún adjunto. [Pasos y comprobaciones](docs/ACCESS_LEVELS.md).
+
 ## Miles de documentos: lotes y cola reanudable
 
-Joomla indexa por lotes; para PDF empieza con 5 elementos, o 1 si son pesados. Desde 0.2.0 se incluye una cola por consola con progreso persistente, reanudación, procesos aislados por archivo, tiempo máximo y listado de fallos. Consulta [Indexación por lotes y cola](docs/INDEXING.md) para los comandos y recomendaciones.
+Joomla indexa por lotes; para PDF empieza con 5 elementos, o 1 si son pesados. Desde 2026.10.1 se incluye una cola por consola con progreso persistente, reanudación, procesos aislados por archivo, tiempo máximo y listado de fallos. Consulta [Indexación por lotes y cola](docs/INDEXING.md) para los comandos y recomendaciones.
 
 ## Generar instaladores con Releases
 
-Al publicar una release, la acción **Build release installer** genera y adjunta automáticamente el ZIP de Joomla. Usa etiquetas como **v0.1.2**; esa versión se aplica al nombre del ZIP y a sus manifiestos internos. [Todos los pasos para publicar una release](docs/RELEASING.md).
+Al publicar una release, la acción **Build release installer** genera y adjunta automáticamente el ZIP de Joomla. Usa etiquetas como **v2026.10.2**; esa versión se aplica al nombre del ZIP y a sus manifiestos internos. [Todos los pasos para publicar una release](docs/RELEASING.md).
 
 ## Construir el ZIP
 
     composer install --no-dev --prefer-dist
     php tools/build.php
 
-El instalador se genera en dist/pkg_attachmentscontentsearch-0.2.0.zip con sus dependencias. No hace falta Composer en el servidor de destino.
+El instalador se genera en dist/pkg_attachmentscontentsearch-2026.10.2.zip con sus dependencias. No hace falta Composer en el servidor de destino.
 
 ## Pruebas
 
@@ -98,6 +102,7 @@ Para las pruebas de integración, con SQLite en PHP:
     composer install --no-dev --working-dir=../joomla-cms
     php tests/access.php ../joomla-cms
 php tests/queue.php ../joomla-cms
+php tests/selection.php ../joomla-cms
 
 GitHub Actions ejecuta las pruebas en PHP 8.3 y 8.4 y publica el ZIP como artefacto.
 

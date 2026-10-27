@@ -26,50 +26,63 @@ final class Queue
             $name = $this->db->quoteName($this->db->getPrefix() . 'acs_queue_status');
             $this->db->setQuery("CREATE INDEX IF NOT EXISTS $name ON $table (status, attachment_id)")->execute();
         }
-    }
-    public function enqueue(): int
-    {
-        $added = 0;
-        $last = 0;
-        // A bounded snapshot; keyset pages avoid loading thousands of records at once.
-        $maximum = (int) $this->db->setQuery('SELECT MAX(id) FROM #__attachments')->loadResult();
-        do {
-            $query = $this->db->createQuery()->select('a.id')->from('#__attachments AS a')
-                ->where('a.id > ' . $last)->where('a.id <= ' . $maximum)->order('a.id ASC')->setLimit(500);
-            $ids = $this->db->setQuery($query)->loadColumn();
-            foreach ($ids as $id) {
-                $last = (int) $id;
-                $exists = $this->db->setQuery($this->db->createQuery()->select('attachment_id')->from(self::TABLE)
-                    ->where('attachment_id = ' . $last))->loadResult();
-                if ($exists !== null) {
-                    continue;
+        $this->db->setQuery('CREATE TABLE IF NOT EXISTS ' . $this->db->quoteName('#__attachmentscontent_state')
+            . ' (id INTEGER NOT NULL PRIMARY KEY, selection_hash VARCHAR(64) NOT NULL)')->execute();
+        if ($this->db->setQuery('SELECT id FROM #__attachmentscontent_state WHERE id = 1')->loadResult() === null) {
+            try {
+                $row = (object) ['id' => 1, 'selection_hash' => ''];
+                $this->db->insertObject('#__attachmentscontent_state', $row);
+            } catch (\Throwable $error) {
+                if ($this->db->setQuery('SELECT id FROM #__attachmentscontent_state WHERE id = 1')->loadResult() === null) {
+                    throw $error;
                 }
-                $row = (object) ['attachment_id' => $last, 'status' => 'pending', 'attempts' => 0,
-                    'error_code' => '', 'updated_at' => gmdate('Y-m-d H:i:s')];
-                $this->db->insertObject(self::TABLE, $row);
-                $added++;
             }
-        } while (count($ids) === 500);
-        return $added;
+        }
+    }
+    public function enqueue(?\Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\IndexSelection $selection = null): int
+    {
+        $selection ??= new \Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\IndexSelection();
+        // Set-based insertion: no document content or ID list is loaded into PHP memory.
+        $select = $this->db->createQuery()->select("a.id, 'pending', 0, '', " . $this->db->quote(gmdate('Y-m-d H:i:s')))
+            ->from('#__attachments AS a')->leftJoin(self::TABLE . ' AS q ON q.attachment_id = a.id')
+            ->where($selection->condition())->where('q.attachment_id IS NULL');
+        $this->db->setQuery('INSERT INTO ' . $this->db->quoteName(self::TABLE)
+            . ' (attachment_id, status, attempts, error_code, updated_at) ' . $select)->execute();
+        return $this->db->getAffectedRows();
+    }
+    public function syncSelection(\Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\IndexSelection $selection): void
+    {
+        $allowed = $this->db->createQuery()->select('1')->from('#__attachments AS a')
+            ->where('a.id = ' . $this->db->quoteName(self::TABLE) . '.attachment_id')->where($selection->condition());
+        $now = $this->db->quote(gmdate('Y-m-d H:i:s'));
+        $this->db->setQuery($this->db->createQuery()->update(self::TABLE)
+            ->set("status = 'excluded'")->set("error_code = 'access_excluded'")->set('updated_at = ' . $now)
+            ->where("status <> 'excluded'")->where('NOT EXISTS (' . $allowed . ')'))->execute();
+        $this->db->setQuery($this->db->createQuery()->update(self::TABLE)
+            ->set("status = 'pending'")->set("error_code = ''")->set('updated_at = ' . $now)
+            ->where("status = 'excluded'")->where('EXISTS (' . $allowed . ')'))->execute();
+        $this->enqueue($selection);
     }
     public function claim(): ?int
     {
-        $query = $this->db->createQuery()->select('attachment_id')->from(self::TABLE)
-            ->where("status = 'pending'")->order('attachment_id ASC')->setLimit(1);
-        $id = $this->db->setQuery($query)->loadResult();
-        if ($id === null) {
-            return null;
-        }
-        $this->db->setQuery($this->db->createQuery()->update(self::TABLE)
-            ->set("status = 'running'")->set('attempts = attempts + 1')->set("error_code = ''")
-            ->set('updated_at = ' . $this->db->quote(gmdate('Y-m-d H:i:s')))
-            ->where('attachment_id = ' . (int) $id))->execute();
+        do {
+            $query = $this->db->createQuery()->select('attachment_id')->from(self::TABLE)
+                ->where("status = 'pending'")->order('attachment_id ASC')->setLimit(1);
+            $id = $this->db->setQuery($query)->loadResult();
+            if ($id === null) {
+                return null;
+            }
+            $this->db->setQuery($this->db->createQuery()->update(self::TABLE)
+                ->set("status = 'running'")->set('attempts = attempts + 1')->set("error_code = ''")
+                ->set('updated_at = ' . $this->db->quote(gmdate('Y-m-d H:i:s')))
+                ->where('attachment_id = ' . (int) $id)->where("status = 'pending'"))->execute();
+        } while ($this->db->getAffectedRows() !== 1);
         return (int) $id;
     }
     public function finish(int $id, string $status, string $error = ''): void
     {
-        if (!in_array($status, ['done', 'skipped', 'failed'], true)
-            || !in_array($error, ['', 'timeout', 'worker_failed', 'extraction_failed', 'empty_text', 'index_failed'], true)) {
+        if (!in_array($status, ['done', 'skipped', 'failed', 'excluded'], true)
+            || !in_array($error, ['', 'timeout', 'worker_failed', 'extraction_failed', 'empty_text', 'index_failed', 'access_excluded'], true)) {
             throw new \InvalidArgumentException('Invalid queue outcome');
         }
         $this->db->setQuery($this->db->createQuery()->update(self::TABLE)
@@ -98,7 +111,7 @@ final class Queue
     }
     public function counts(): array
     {
-        $counts = array_fill_keys(['pending', 'running', 'done', 'skipped', 'failed'], 0);
+        $counts = array_fill_keys(['pending', 'running', 'done', 'skipped', 'failed', 'excluded'], 0);
         $rows = $this->db->setQuery($this->db->createQuery()->select('status, COUNT(*) AS total')
             ->from(self::TABLE)->group('status'))->loadObjectList();
         foreach ($rows as $row) {

@@ -8,11 +8,11 @@ Mantén abierta la ventana hasta terminar. Un lote pequeño reduce el trabajo po
 
 ## Cola para miles de adjuntos
 
-Desde **0.2.0**, la extensión incluye una cola por consola con progreso en la base de datos, reanudación y fallos identificados. No depende del navegador. El botón Índice de Joomla sigue usando el mecanismo original y no utiliza esta cola.
+Desde **2026.10.1**, la extensión incluye una cola por consola con progreso en la base de datos, reanudación y fallos identificados. No depende del navegador. El botón Índice de Joomla sigue usando el mecanismo original y no utiliza esta cola.
 
 Requisitos:
 
-- Instala la versión 0.2.0 o posterior y completa la [configuración](CONFIGURATION.md), con ambos plugins habilitados y descargas seguras.
+- Instala la versión 2026.10.1 o posterior y completa la [configuración](CONFIGURATION.md), con ambos plugins habilitados y descargas seguras.
 - Ejecuta los comandos desde la raíz de Joomla, con un usuario del sistema que pueda leer los adjuntos, escribir en la carpeta temporal configurada y acceder a la base de datos.
 - PHP CLI 8.3+ con ZIP, DOM, mbstring y la función **proc_open** disponible. Su configuración puede diferir de PHP web.
 - Ejecuta la cola desde un solo servidor. Los bloqueos no coordinan varios nodos.
@@ -27,7 +27,7 @@ php cli/joomla.php attachments:index enqueue
 php -d memory_limit=512M cli/joomla.php attachments:index run --limit=100 --timeout=60
 ~~~
 
-**enqueue** añade IDs nuevos sin duplicar ni reiniciar trabajos terminados. Lee páginas de 500 registros para evitar cargar todos los documentos en memoria.
+**enqueue** añade IDs nuevos sin duplicar ni reiniciar trabajos terminados. Utiliza una consulta SQL para incorporar los IDs elegibles, sin cargar el contenido de los documentos en memoria.
 
 **run** procesa como máximo 100 trabajos en esa ejecución. Cada archivo se procesa en un **proceso PHP separado**, con hasta 60 segundos de tiempo real. El hijo hereda el memory_limit del supervisor. Repite el mismo comando para continuar con los siguientes trabajos.
 
@@ -42,6 +42,7 @@ Al terminar cada archivo se guarda su estado y se muestra el ID y resultado. Al 
 | done | Indexado |
 | skipped | Omitido: formato no compatible, despublicado o adjunto eliminado |
 | failed | Fallido que requiere revisión |
+| excluded | Fuera de los niveles de acceso elegidos para indexar |
 
 Un fallo individual no detiene los siguientes trabajos. Si quedan fallidos, run devuelve código 1 para que un planificador pueda detectarlo; código 0 indica que no hay fallidos, aunque todavía pueda quedar trabajo pendiente. Un error de infraestructura, como no poder iniciar o detener el proceso hijo, detiene la ejecución para evitar trabajar sin control.
 
@@ -97,8 +98,16 @@ php -d memory_limit=512M cli/joomla.php attachments:index run --limit=100 --time
 
 **refresh** no vacía el índice global: pone los terminados y omitidos en pendientes y añade IDs nuevos. Los fallidos requieren **retry**. La cola registra únicamente su propio trabajo: el indexador web y las actualizaciones al guardar no cambian sus contadores.
 
+## Selección de niveles de acceso
+
+Desde 2026.10.2, la cola respeta los [niveles configurados en el plugin Finder](ACCESS_LEVELS.md). Guardar la selección excluye trabajos que ya no correspondan y pone en pendientes los nuevos incluidos. Para forzar la sincronización sin extraer documentos:
+
+~~~sh
+php cli/joomla.php attachments:index sync
+~~~
+
 ## Almacenamiento y permisos
 
-La primera ejecución crea **#__attachmentscontent_queue**, con el prefijo real de la base de datos. Guarda una fila pequeña por ID: estado, intentos, código de error y fecha. No duplica PDF/DOCX ni su texto. La indexación sigue usando Finder y sus controles de acceso; la consola no hace públicos los documentos.
+La instalación o la primera ejecución crea **#__attachmentscontent_queue**, con el prefijo real de la base de datos. Guarda una fila pequeña por ID: estado, intentos, código de error y fecha. No duplica PDF/DOCX ni su texto. La tabla **#__attachmentscontent_state** guarda una huella de la selección sincronizada. La indexación sigue usando Finder y sus controles de acceso; la consola no hace públicos los documentos.
 
 Los bloqueos se guardan en la carpeta temporal de Joomla y no contienen documentos. No los elimines mientras haya procesos activos. La tabla de progreso se conserva al desinstalar para permitir reanudar; puedes eliminarla manualmente cuando ya no la necesites. Después de una reinstalación o de vaciar Finder, usa **refresh** para reconstruir.

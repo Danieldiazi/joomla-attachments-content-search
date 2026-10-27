@@ -23,6 +23,8 @@ function sql(string $statement): void {
     global $db;
     $db->setQuery($statement)->execute();
 }
+sql("CREATE TABLE t_extensions (type TEXT, folder TEXT, element TEXT, params TEXT)");
+sql("INSERT INTO t_extensions VALUES ('plugin', 'finder', 'attachmentscontent', '{}')");
 sql('CREATE TABLE t_attachments (id INTEGER PRIMARY KEY, filename TEXT, uri_type TEXT, parent_type TEXT, parent_entity TEXT, parent_id INTEGER, state INTEGER, access INTEGER)');
 sql('CREATE TABLE t_content (id INTEGER PRIMARY KEY, catid INTEGER, state INTEGER, access INTEGER, publish_up TEXT, publish_down TEXT)');
 sql('CREATE TABLE t_categories (id INTEGER PRIMARY KEY, extension TEXT, lft INTEGER, rgt INTEGER, published INTEGER, access INTEGER)');
@@ -109,6 +111,10 @@ foreach ([
     sql('ALTER TABLE t_finder_links ADD COLUMN ' . $column);
 }
 sql('CREATE TABLE t_finder_links_terms (link_id INTEGER, term_id INTEGER, weight REAL)');
+sql('CREATE TABLE t_finder_terms (term_id INTEGER PRIMARY KEY, links INTEGER)');
+sql('CREATE TABLE t_finder_taxonomy_map (link_id INTEGER, node_id INTEGER)');
+(new Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\Queue($db))->install();
+$db->setQuery("UPDATE t_attachmentscontent_state SET selection_hash = '" . (new Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\IndexSelection())->hash() . "'")->execute();
 sql("INSERT INTO t_attachments VALUES (1, 'public.docx', 'file', 'com_content', 'article', 10, 1, 1)");
 sql('UPDATE t_attachments SET access = 3 WHERE id = 2');
 sql('UPDATE t_categories SET published = 1, access = 1 WHERE id = 4');
@@ -153,6 +159,13 @@ $guest = searchModel([1], 1);
 check($guest->getTotal() === 3 && $guest->getItems()[0]->title === 'Documento 4', 'Guest pagination excludes private documents before paging');
 sql('UPDATE t_attachments SET access = 7 WHERE id = 2');
 check(searchModel([1, 3])->getTotal() === 4, 'Real search immediately applies a permission revocation');
+// A changed indexing scope is applied to real search results before physical cleanup.
+sql('UPDATE t_extensions SET params = ' . $db->quote('{"index_access_mode":"selected","index_access_levels":[]}'));
+check(searchModel([1, 3])->getTotal() === 1, 'Empty indexing scope hides stale attachment matches before totals and paging');
+$downloadQuery = AccessPolicy::attachmentQuery($db, [1, 3], gmdate('Y-m-d H:i:s'));
+$downloadQuery->where('a.id = 1');
+check((int) $db->setQuery($downloadQuery)->loadResult() === 1, 'Index selection does not revoke an otherwise authorised attachment download');
+sql("UPDATE t_extensions SET params = '{}'");
 $components->getValue()['com_attachments']->getParams()->set('secure', 0);
 check(searchModel([1, 3])->getTotal() === 1, 'Real search hides all document entries when secure downloads are disabled');
 echo "$testCount total access and integration checks passed.\n";
@@ -167,14 +180,16 @@ echo "$testCount total access and integration checks passed.\n";
 // Queue integration uses the real plugin/Result/extractor; only the core index writer is replaced.
 class QueueTestIndexer extends Joomla\Component\Finder\Administrator\Indexer\Indexer {
     public array $written = [];
+    public ?Closure $afterWrite = null;
     public function __construct() {}
-    public function index($item, $format = 'html') { $this->written[] = $item; return 1; }
+    public function index($item, $format = 'html') { $this->written[] = $item; if ($this->afterWrite) { ($this->afterWrite)($item); } return 1; }
     public function remove($linkId, $removeTaxonomies = true) { return true; }
 }
 $components->getValue()['com_attachments']->getParams()->set('secure', 1);
-Joomla\CMS\Factory::$application = new class {
-    public function triggerEvent($name, $args) { return []; }
-    public function get($key, $default = null) { return $key === 'log_path' ? dirname(__DIR__) . '/build/logs' : $default; }
+Joomla\CMS\Factory::$application = new class extends Joomla\CMS\Application\ConsoleApplication {
+    public function __construct() {}
+    public function triggerEvent($name, $args = []) { return []; }
+    public function get($key, $default = null) { return match ($key) { 'log_path' => dirname(__DIR__) . '/build/logs', 'tmp_path' => dirname(__DIR__) . '/build', default => $default }; }
 };
 Joomla\CMS\Factory::$config = new Joomla\Registry\Registry(['log_path' => dirname(__DIR__) . '/build/logs']);
 @mkdir(dirname(__DIR__) . '/build/logs', 0775, true);
@@ -182,6 +197,7 @@ foreach (['created TEXT', 'filename_sys TEXT', 'display_name TEXT', 'description
     sql('ALTER TABLE t_attachments ADD COLUMN ' . $column);
 }
 (new ReflectionProperty($adapter, 'db'))->setValue($adapter, $db);
+$adapter->setApplication(Joomla\CMS\Factory::$application);
 $writer = new QueueTestIndexer();
 (new ReflectionProperty($adapter, 'indexer'))->setValue($adapter, $writer);
 (new ReflectionProperty($adapter, 'params'))->setValue($adapter, new Joomla\Registry\Registry());
@@ -213,4 +229,49 @@ $command = new Danieldiazi\Plugin\System\AttachmentsContentGuard\Console\IndexCo
 $worker = new Danieldiazi\Plugin\System\AttachmentsContentGuard\Console\WorkerCommand($db);
 check($command->getName() === 'attachments:index' && $worker->isHidden(), 'Queue commands are compatible with Joomla Console');
 check(isset(Danieldiazi\Plugin\System\AttachmentsContentGuard\Extension\Guard::getSubscribedEvents()['application.before_execute']), 'System guard registers queue commands in the Joomla console event');
+echo "$testCount total access and integration checks passed.\n";
+
+sql('UPDATE t_extensions SET params = ' . $db->quote('{"index_access_mode":"selected","index_access_levels":[]}'));
+$written = count($writer->written);
+check($adapter->indexQueuedAttachment(1) === 'excluded' && count($writer->written) === $written, 'Queue checks the current level selection before reading a document');
+$item = (new ReflectionMethod($adapter, 'getItem'))->invoke($adapter, 1);
+(new ReflectionMethod($adapter, 'index'))->invoke($adapter, $item);
+check(count($writer->written) === $written, 'Normal Finder indexing also excludes unselected levels');
+
+$guard = (new ReflectionClass(Danieldiazi\Plugin\System\AttachmentsContentGuard\Extension\Guard::class))->newInstanceWithoutConstructor();
+$guard->setDatabase($db);
+$guard->setApplication(Joomla\CMS\Factory::$application);
+$scopeSync = new Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\SelectionSynchronizer($db, dirname(__DIR__) . '/build/event-scope.lock');
+sql('UPDATE t_extensions SET params = ' . $db->quote('{"index_access_mode":"selected","index_access_levels":[1]}'));
+$guard->onExtensionAfterSave(new Joomla\Event\Event('onExtensionAfterSave', ['subject' => (object) ['type' => 'plugin', 'folder' => 'finder', 'element' => 'anotherplugin']]));
+check($scopeSync->needsSync(), 'Saving another plugin does not reconcile this extension');
+$guard->onExtensionAfterSave(new Joomla\Event\Event('onExtensionAfterSave', ['subject' => (object) ['type' => 'plugin', 'folder' => 'finder', 'element' => 'attachmentscontent']]));
+check(!$scopeSync->needsSync() && $db->setQuery('SELECT status FROM t_attachmentscontent_queue WHERE attachment_id = 1')->loadResult() === 'pending', 'Saving the finder plugin reconciles the queue and schedules newly included levels');
+$fields = simplexml_load_file(dirname(__DIR__) . '/plugins/finder/attachmentscontent/attachmentscontent.xml');
+check((string) $fields->config->fields->fieldset->field[0]['default'] === 'all'
+    && (string) $fields->config->fields->fieldset->field[1]['multiple'] === 'true', 'Configuration exposes all-level default and native Joomla multiselect');
+echo "$testCount total access and integration checks passed.\n";
+
+// Simulate a settings save during Finder's write, after the final pre-write scope check.
+sql("UPDATE t_extensions SET params = '{}'");
+$base = dirname(__DIR__) . '/build/acs-' . hash('sha256', JPATH_ROOT . $db->getPrefix());
+$scopeSync = new Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\SelectionSynchronizer($db, $base . '-worker.lock');
+$scopeSync->synchronize();
+$archive->open($file, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+$archive->addFromString('word/document.xml', '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>pesca during scope change</w:t></w:r></w:p></w:body></w:document>');
+$archive->close();
+$workerLock = new Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\FileLock($base . '-worker.lock');
+$writer->afterWrite = static function ($item) use ($db, $scopeSync): void {
+    sql('INSERT INTO t_finder_links (link_id, url, access) VALUES (901, ' . $db->quote($item->url) . ', 0)');
+    sql('INSERT INTO t_finder_terms VALUES (901, 1)');
+    sql('INSERT INTO t_finder_links_terms VALUES (901, 901, 1)');
+    sql('UPDATE t_extensions SET params = ' . $db->quote('{"index_access_mode":"selected","index_access_levels":[]}'));
+    check(!$scopeSync->synchronize(), 'Saving during a Finder write defers deletion until the worker finishes');
+};
+check($adapter->indexQueuedAttachment(1) === 'excluded', 'In-flight index result is classified using the new committed selection');
+check($db->setQuery('SELECT link_id FROM t_finder_links WHERE link_id = 901')->loadResult() === null
+    && !$scopeSync->needsSync(), 'Worker completion removes an excluded entry even if it was written after settings changed');
+$writer->afterWrite = null;
+unset($workerLock);
+@unlink($file);
 echo "$testCount total access and integration checks passed.\n";
