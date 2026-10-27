@@ -20,6 +20,9 @@ final class AttachmentsContent extends Adapter implements SubscriberInterface
 {
     use DatabaseAwareTrait;
 
+    private bool $queueMode = false;
+    private string $queueOutcome = 'skipped';
+
     protected $context = 'AttachmentsContent';
     protected $extension = 'com_attachments';
     protected $layout = 'acsattachment';
@@ -79,6 +82,25 @@ final class AttachmentsContent extends Adapter implements SubscriberInterface
             throw new \RuntimeException('Attachments Content Search batch: ' . $error->getMessage(), 0, $error);
         }
     }
+    /** Index one durable job without Finder's browser batch/session offsets. */
+    public function indexQueuedAttachment(int $id): string
+    {
+        $this->setup();
+        $this->queueMode = true;
+        $this->queueOutcome = 'skipped';
+        try {
+            $row = $this->getDatabase()->setQuery($this->getListQuery()->where('a.id = ' . $id))->loadObject();
+            if (!$row) {
+                $this->remove($id);
+                return 'skipped';
+            }
+            $this->index($this->getItem($id));
+            return $this->queueOutcome;
+        } finally {
+            $this->queueMode = false;
+        }
+    }
+
     protected function index(Result $item)
     {
         $id = (int) $item->id;
@@ -100,9 +122,13 @@ final class AttachmentsContent extends Adapter implements SubscriberInterface
             Log::addLogger(['text_file' => 'attachments-content-search.php'], Log::ALL, ['attachmentscontent']);
             // Never log extracted text, original filenames, or exception messages containing paths.
             Log::add('Attachment ID ' . $id . ': extraction failed (' . get_class($e) . ').', Log::WARNING, 'attachmentscontent');
+            if ($this->queueMode) {
+                throw new \RuntimeException('ACS_EXTRACTION_FAILED', 0, $e);
+            }
             return;
         }
         if ($text === '') {
+            $this->queueOutcome = 'empty_text';
             return;
         }
         // Build a fresh Result: do not serialize the server path or unneeded attachment fields.
@@ -124,6 +150,7 @@ final class AttachmentsContent extends Adapter implements SubscriberInterface
             ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         $result->addTaxonomy('Type', 'Attachment document');
         $this->indexer->index($result);
+        $this->queueOutcome = 'done';
     }
 
     public function onFinderAfterSave(Event $event): void

@@ -84,6 +84,8 @@ El protector desactiva las sugerencias automáticas y las propuestas de búsqued
 3. Pulsa **Índice** y espera a que termine.
 4. Comprueba que aparece el tipo **Attachment document** y los títulos de tus documentos.
 
+Para PDF, configura inicialmente el tamaño del lote de Finder en **5**, o **1** si son pesados. Un archivo complejo puede superar por sí solo el tiempo o la memoria disponibles. Para miles de archivos, utiliza la [cola persistente con reanudación e informe de fallos](INDEXING.md), disponible desde 0.2.0.
+
 Los archivos existentes necesitan esta primera indexación. Las nuevas subidas, sustituciones, borrados y cambios de estado se actualizan mediante los eventos de Attachments cuando está activo el plugin de contenido de Smart Search.
 
 Para importaciones o cambios directos en disco/base de datos, ejecuta de nuevo el índice. Los cambios de permisos y publicación se consultan además durante cada búsqueda.

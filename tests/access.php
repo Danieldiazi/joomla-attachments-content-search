@@ -163,3 +163,54 @@ $adapter->setDatabase($db);
 $stateQuery = (new ReflectionMethod($adapter, 'getStateQuery'))->invoke($adapter);
 check(count($db->setQuery($stateQuery)->loadObjectList()) === 5, 'Attachment state lookup works without an a.catid column');
 echo "$testCount total access and integration checks passed.\n";
+
+// Queue integration uses the real plugin/Result/extractor; only the core index writer is replaced.
+class QueueTestIndexer extends Joomla\Component\Finder\Administrator\Indexer\Indexer {
+    public array $written = [];
+    public function __construct() {}
+    public function index($item, $format = 'html') { $this->written[] = $item; return 1; }
+    public function remove($linkId, $removeTaxonomies = true) { return true; }
+}
+$components->getValue()['com_attachments']->getParams()->set('secure', 1);
+Joomla\CMS\Factory::$application = new class {
+    public function triggerEvent($name, $args) { return []; }
+    public function get($key, $default = null) { return $key === 'log_path' ? dirname(__DIR__) . '/build/logs' : $default; }
+};
+Joomla\CMS\Factory::$config = new Joomla\Registry\Registry(['log_path' => dirname(__DIR__) . '/build/logs']);
+@mkdir(dirname(__DIR__) . '/build/logs', 0775, true);
+foreach (['created TEXT', 'filename_sys TEXT', 'display_name TEXT', 'description TEXT'] as $column) {
+    sql('ALTER TABLE t_attachments ADD COLUMN ' . $column);
+}
+(new ReflectionProperty($adapter, 'db'))->setValue($adapter, $db);
+$writer = new QueueTestIndexer();
+(new ReflectionProperty($adapter, 'indexer'))->setValue($adapter, $writer);
+(new ReflectionProperty($adapter, 'params'))->setValue($adapter, new Joomla\Registry\Registry());
+check($adapter->indexQueuedAttachment(9999) === 'skipped', 'Queue removes stale entry for a deleted attachment');
+sql("UPDATE t_attachments SET uri_type = 'url' WHERE id = 1");
+check($adapter->indexQueuedAttachment(1) === 'skipped', 'Queue skips unsupported attachment without reporting success');
+sql("UPDATE t_attachments SET uri_type = 'file', filename_sys = '/not-a-valid-attachment.docx' WHERE id = 1");
+try {
+    $adapter->indexQueuedAttachment(1);
+    check(false, 'Queue reports extraction failures');
+} catch (RuntimeException $error) {
+    check($error->getMessage() === 'ACS_EXTRACTION_FAILED', 'Queue reports extraction failures rather than silently marking done');
+}
+@mkdir(JPATH_ROOT . '/attachments', 0775, true);
+$file = JPATH_ROOT . '/attachments/queue-test.docx';
+$archive = new ZipArchive();
+$archive->open($file, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+$archive->addFromString('word/document.xml', '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>pesca personales</w:t></w:r></w:p></w:body></w:document>');
+$archive->close();
+sql('UPDATE t_attachments SET filename_sys = ' . $db->quote($file) . " WHERE id = 1");
+check($adapter->indexQueuedAttachment(1) === 'done' && str_contains($writer->written[0]->body, 'pesca personales'), 'Queue passes extracted DOCX content to the real Joomla Result');
+$archive->open($file, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+$archive->addFromString('word/document.xml', '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body/></w:document>');
+$archive->close();
+check($adapter->indexQueuedAttachment(1) === 'empty_text', 'Queue distinguishes an empty document from a successful index');
+check((new ReflectionProperty($adapter, 'queueMode'))->getValue($adapter) === false, 'Queue mode is reset after successful and failed jobs');
+@unlink($file);
+$command = new Danieldiazi\Plugin\System\AttachmentsContentGuard\Console\IndexCommand($db);
+$worker = new Danieldiazi\Plugin\System\AttachmentsContentGuard\Console\WorkerCommand($db);
+check($command->getName() === 'attachments:index' && $worker->isHidden(), 'Queue commands are compatible with Joomla Console');
+check(isset(Danieldiazi\Plugin\System\AttachmentsContentGuard\Extension\Guard::getSubscribedEvents()['application.before_execute']), 'System guard registers queue commands in the Joomla console event');
+echo "$testCount total access and integration checks passed.\n";

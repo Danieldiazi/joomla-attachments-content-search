@@ -18,10 +18,20 @@ final class Guard extends CMSPlugin implements SubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
+            'application.before_execute' => 'registerQueueCommands',
             'onPageCacheSetCaching' => 'onPageCacheSetCaching',
             'onAfterExtensionBoot' => 'onAfterExtensionBoot',
             'onAfterRoute' => ['onAfterRoute', 1000],
         ];
+    }
+
+    public function registerQueueCommands(): void
+    {
+        $app = $this->getApplication();
+        if ($app instanceof \Joomla\Console\Application) {
+            $app->addCommand(new \Danieldiazi\Plugin\System\AttachmentsContentGuard\Console\IndexCommand($this->getDatabase()));
+            $app->addCommand(new \Danieldiazi\Plugin\System\AttachmentsContentGuard\Console\WorkerCommand($this->getDatabase()));
+        }
     }
 
     public function onPageCacheSetCaching(\Joomla\CMS\Event\PageCache\SetCachingEvent $event): void

@@ -33,6 +33,7 @@ jobs:
           find plugins package tools tests -name '*.php' -print0 | xargs -0 -n1 php -l
           php -d memory_limit=128M tests/extraction.php
           php tests/access.php ../joomla-cms
+          php tests/queue.php ../joomla-cms
       - name: Build versioned installer
         id: build
         run: |

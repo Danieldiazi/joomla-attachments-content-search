@@ -1,5 +1,5 @@
 <?php
-$path = $argv[1] ?? dirname(__DIR__) . '/dist/pkg_attachmentscontentsearch-0.1.1.zip';
+$path = $argv[1] ?? dirname(__DIR__) . '/dist/pkg_attachmentscontentsearch-0.2.0.zip';
 $zip = new ZipArchive();
 if ($zip->open($path) !== true) {
     throw new RuntimeException('Cannot open installer');
@@ -49,6 +49,13 @@ foreach ($manifest->files->file as $file) {
     }
     if ($id === 'attachmentscontent' && $child->getFromName('vendor/smalot/pdfparser/src/Smalot/PdfParser/Parser.php') === false) {
         throw new RuntimeException('PDF dependency missing');
+    }
+    if ($id === 'attachmentscontentguard') {
+        foreach (['src/Console/IndexCommand.php', 'src/Console/WorkerCommand.php', 'src/Queue/Queue.php', 'src/Queue/ProcessRunner.php', 'src/Queue/FileLock.php'] as $entry) {
+            if ($child->getFromName($entry) === false) {
+                throw new RuntimeException('Queue dependency missing: ' . $entry);
+            }
+        }
     }
     $child->close();
 }

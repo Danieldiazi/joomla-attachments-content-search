@@ -80,4 +80,3 @@ foreach ($children as $child) {
 }
 $zip->close();
 echo $output . "\n";
-
