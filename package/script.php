@@ -42,7 +42,7 @@ class pkg_attachmentscontentsearchInstallerScript
         require_once JPATH_ROOT . '/plugins/system/attachmentscontentguard/src/Queue/Queue.php';
         (new \Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\Queue(Factory::getContainer()->get(DatabaseInterface::class)))->install();
         Factory::getApplication()->enqueueMessage(
-            'Attachments Content Search: enable secure downloads in Attachments; enable System - Attachments Content Search Guard and Smart Search - Attachments Content Search; disable the original Smart Search - Attachments; clear and rebuild the Smart Search index. See README for the permission test checklist.',
+            'Attachments Content Search: enable secure downloads in Attachments; enable System - Attachments Content Search Guard and Smart Search - Attachments Content Search; disable the original Smart Search - Attachments; review indexed access levels and run initial indexing or resume the queue as appropriate. See docs/CONFIGURATION.md for setup and permission checks.',
             'notice'
         );
     }

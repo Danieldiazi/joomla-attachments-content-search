@@ -275,3 +275,30 @@ $writer->afterWrite = null;
 unset($workerLock);
 @unlink($file);
 echo "$testCount total access and integration checks passed.\n";
+
+// A logging outage must not turn a missing attachment into a failed web index batch.
+$previousLog = (new ReflectionProperty(Joomla\CMS\Log\Log::class, 'instance'))->getValue();
+$unavailableLogger = new class extends Joomla\CMS\Log\Log {
+    public function __construct() {}
+    protected function addLoggerInternal(array $options, $priorities = self::ALL, $categories = [], $exclude = false) {}
+    protected function addLogEntry(Joomla\CMS\Log\LogEntry $entry) { throw new RuntimeException('LOGGER_UNAVAILABLE'); }
+};
+Joomla\CMS\Log\Log::setInstance($unavailableLogger);
+try {
+    sql("UPDATE t_extensions SET params = '{}'");
+    sql("UPDATE t_attachments SET filename_sys = '/missing-attachment.docx' WHERE id = 1");
+    $scopeSync->synchronize();
+    $missing = (new ReflectionMethod($adapter, 'getItem'))->invoke($adapter, 1);
+    $before = count($writer->written);
+    (new ReflectionMethod($adapter, 'index'))->invoke($adapter, $missing);
+    check(count($writer->written) === $before, 'Missing attachment is omitted even when logging is unavailable');
+    try {
+        $adapter->indexQueuedAttachment(1);
+        check(false, 'Queue preserves extraction failure when logging is unavailable');
+    } catch (RuntimeException $error) {
+        check($error->getMessage() === 'ACS_EXTRACTION_FAILED', 'Queue preserves extraction failure when logging is unavailable');
+    }
+} finally {
+    Joomla\CMS\Log\Log::setInstance($previousLog);
+}
+echo "$testCount total access and integration checks passed.\n";

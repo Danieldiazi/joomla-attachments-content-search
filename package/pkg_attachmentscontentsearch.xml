@@ -3,7 +3,7 @@
   <name>Attachments Content Search</name>
   <packagename>attachmentscontentsearch</packagename>
   <author>Danieldiazi</author>
-  <version>2026.10.2</version>
+  <version>2026.10.3</version>
   <creationDate>2026-10</creationDate>
   <license>GNU General Public License version 3 or later</license>
   <description>DOCX and PDF full-text search for Attachments with live access checks. Enable both included plugins after installation.</description>

@@ -96,3 +96,28 @@ file_put_contents($dir . '/compressed-image.pdf', $pdfData);
 unset($pdfData, $objects, $imageStream);
 check(str_contains($extractor->extract($dir . '/compressed-image.pdf', 'compressed-image.pdf', $dir), 'pesca con imagen'), 'Extracts text without inflating a 192 MB image under a 128 MB PHP limit');
 echo "$testCount total extraction checks passed.\n";
+
+// Unavailable files should produce a controlled extraction failure.
+try {
+    $extractor->extract($dir . '/does-not-exist.docx', 'does-not-exist.docx', $dir);
+    check(false, 'Missing file is rejected with a controlled unavailable-file error');
+} catch (RuntimeException $error) {
+    check($error->getMessage() === 'FILE_UNAVAILABLE', 'Missing file is rejected with a controlled unavailable-file error');
+}
+if (PHP_OS_FAMILY !== 'Windows' && function_exists('posix_geteuid') && posix_geteuid() !== 0) {
+    $unreadable = $dir . '/fishing.docx';
+    chmod($unreadable, 0000);
+    clearstatcache(true, $unreadable);
+    try {
+        $extractor->extract($unreadable, 'fishing.docx', $dir);
+        check(false, 'File without read permissions is rejected without aborting PHP');
+    } catch (RuntimeException $error) {
+        check($error->getMessage() === 'FILE_UNAVAILABLE', 'File without read permissions is rejected without aborting PHP');
+    } finally {
+        chmod($unreadable, 0600);
+        clearstatcache(true, $unreadable);
+    }
+} else {
+    echo "SKIP: Unix read-permission test requires a non-root Unix process.\n";
+}
+echo "$testCount total extraction checks passed.\n";

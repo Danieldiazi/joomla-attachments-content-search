@@ -111,3 +111,11 @@ php cli/joomla.php attachments:index sync
 La instalación o la primera ejecución crea **#__attachmentscontent_queue**, con el prefijo real de la base de datos. Guarda una fila pequeña por ID: estado, intentos, código de error y fecha. No duplica PDF/DOCX ni su texto. La tabla **#__attachmentscontent_state** guarda una huella de la selección sincronizada. La indexación sigue usando Finder y sus controles de acceso; la consola no hace públicos los documentos.
 
 Los bloqueos se guardan en la carpeta temporal de Joomla y no contienen documentos. No los elimines mientras haya procesos activos. La tabla de progreso se conserva al desinstalar para permitir reanudar; puedes eliminarla manualmente cuando ya no la necesites. Después de una reinstalación o de vaciar Finder, usa **refresh** para reconstruir.
+
+## Archivos ausentes o sin permiso de lectura
+
+Si el archivo no existe, su ruta no es válida o PHP no puede leerlo, la extracción se rechaza. En el indexador web se omite el documento y se continúa; se intenta registrar un aviso con su ID. En la cola queda como failed/extraction_failed y puede reintentarse después de corregir el archivo o sus permisos. La entrada anterior del documento se retira para evitar resultados con texto antiguo.
+
+Desde 2026.10.3, un fallo del registro de Joomla tampoco interrumpe el lote: si no puede escribir el aviso, el documento se omite y la cola conserva el fallo de extracción. Revisa también los permisos del directorio de logs para disponer del diagnóstico.
+
+El permiso de lectura del archivo corresponde al usuario del sistema que ejecuta PHP, no al usuario de Joomla que inicia la indexación. Los permisos de los usuarios de Joomla se comprueban por separado al buscar y descargar. Los errores fatales de memoria siguen requiriendo el aislamiento de procesos de la cola.

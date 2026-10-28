@@ -144,9 +144,13 @@ final class AttachmentsContent extends Adapter implements SubscriberInterface
             $extractor = new TextExtractor(max(1, min(100, (int) $this->params->get('max_file_mb', 20))) * 1048576);
             $text = $extractor->extract((string) $item->filename_sys, (string) $item->filename, JPATH_ROOT . '/attachments');
         } catch (\Throwable $e) {
-            Log::addLogger(['text_file' => 'attachments-content-search.php'], Log::ALL, ['attachmentscontent']);
-            // Never log extracted text, original filenames, or exception messages containing paths.
-            Log::add('Attachment ID ' . $id . ': extraction failed (' . get_class($e) . ').', Log::WARNING, 'attachmentscontent');
+            try {
+                Log::addLogger(['text_file' => 'attachments-content-search.php'], Log::ALL, ['attachmentscontent']);
+                // Never log extracted text, original filenames, or exception messages containing paths.
+                Log::add('Attachment ID ' . $id . ': extraction failed (' . get_class($e) . ').', Log::WARNING, 'attachmentscontent');
+            } catch (\Throwable $loggingError) {
+                // A logging outage must not abort the batch or replace the queue failure.
+            }
             if ($this->queueMode) {
                 throw new \RuntimeException('ACS_EXTRACTION_FAILED', 0, $e);
             }
