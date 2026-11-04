@@ -42,9 +42,14 @@ foreach ($manifest->files->file as $file) {
             throw new RuntimeException('Manifest folder missing: ' . $folder);
         }
     }
-    foreach ($pluginManifest->languages->language as $language) {
+    foreach (($pluginManifest->languages->language ?? []) as $language) {
         if ($child->getFromName((string) $language) === false) {
             throw new RuntimeException('Language missing');
+        }
+    }
+    if ($id === 'mod_attachmentscontent') {
+        if ((string) $pluginManifest['client'] !== 'administrator' || $child->getFromName('mod_attachmentscontent.php') === false || $child->getFromName('tmpl/default.php') === false) {
+            throw new RuntimeException('Administrator summary module incomplete');
         }
     }
     if ($id === 'attachmentscontent' && $child->getFromName('vendor/smalot/pdfparser/src/Smalot/PdfParser/Parser.php') === false) {
@@ -60,4 +65,4 @@ foreach ($manifest->files->file as $file) {
     $child->close();
 }
 $zip->close();
-echo "PASS: package contains both plugins, manifests, languages and PDF dependencies.\n";
+echo "PASS: package contains plugins, administrator module, manifests, languages and PDF dependencies.\n";

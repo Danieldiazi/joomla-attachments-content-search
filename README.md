@@ -124,3 +124,9 @@ GitHub Actions ejecuta las pruebas en PHP 8.3 y 8.4 y publica el ZIP como artefa
 GPL-3.0-or-later. [smalot/pdfparser](https://github.com/smalot/pdfparser) usa LGPL-3.0 y se distribuye con su licencia en vendor. Las demás dependencias conservan sus licencias.
 
 Proyecto independiente; no es una publicación oficial de Joomla ni de Attachments.
+
+## Panel de administración
+
+El paquete incluye el módulo **Attachments Content Search — Resumen**. Tras instalar o actualizar, crea un módulo de administrador de este tipo en **Contenido → Módulos del administrador**, publícalo en la posición **cpanel** y selecciona el acceso administrativo apropiado. Solo muestra datos a usuarios con permisos de administración de Búsqueda inteligente y Contenido.
+
+Muestra todos los niveles, incluidos los excluidos, entradas reales del índice y estados de la cola existente. Permite filtrar pulsando un nivel, recorrer páginas de 25 adjuntos y abrir o editar sus artículos/categorías. Distingue el acceso del adjunto del acceso del padre; las categorías superiores también pueden restringir la visualización. No añade tablas ni modifica el índice o la cola. Si la cola no existe, lo indica; no la crea. Los estados de cola no son sumables con el total indexado y los archivos sin estado no se etiquetan como pendientes.

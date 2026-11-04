@@ -66,6 +66,15 @@ foreach (['system/attachmentscontentguard', 'finder/attachmentscontent'] as $chi
     $zip->close();
     $children[] = $path;
 }
+$moduleName = 'mod_attachmentscontent';
+$modulePath = $dist . '/' . $moduleName . '.zip';
+$moduleZip = new ZipArchive();
+if ($moduleZip->open($modulePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) { throw new RuntimeException('Cannot create module archive'); }
+addTree($moduleZip, $root . '/modules/' . $moduleName);
+$moduleZip->addFromString($moduleName . '.xml', versionedManifest($root . '/modules/' . $moduleName . '/' . $moduleName . '.xml', $version));
+$moduleZip->addFile($root . '/LICENSE', 'LICENSE');
+$moduleZip->close();
+$children[] = $modulePath;
 $output = $dist . '/pkg_attachmentscontentsearch-' . $version . '.zip';
 $zip = new ZipArchive();
 if ($zip->open($output, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
