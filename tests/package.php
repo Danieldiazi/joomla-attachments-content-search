@@ -1,5 +1,5 @@
 <?php
-$path = $argv[1] ?? dirname(__DIR__) . '/dist/pkg_attachmentscontentsearch-2026.10.3.zip';
+$path = $argv[1] ?? dirname(__DIR__) . '/dist/pkg_attachmentscontentsearch-2026.11.2.zip';
 $zip = new ZipArchive();
 if ($zip->open($path) !== true) {
     throw new RuntimeException('Cannot open installer');
@@ -26,11 +26,12 @@ foreach ($manifest->files->file as $file) {
         throw new RuntimeException('Invalid child ZIP');
     }
     $id = (string) $file['id'];
-    $pluginManifest = simplexml_load_string($child->getFromName($id . '.xml'));
+    $manifestName = $id === 'com_attachmentscontentsearch' ? 'attachmentscontentsearch' : $id;
+    $pluginManifest = simplexml_load_string($child->getFromName($manifestName . '.xml'));
     if ((string) $pluginManifest->version !== $version) {
         throw new RuntimeException('Child plugin version differs from package');
     }
-    foreach ($pluginManifest->files->folder as $folder) {
+    foreach (($pluginManifest->files->folder ?? []) as $folder) {
         $found = false;
         for ($i = 0; $i < $child->numFiles; $i++) {
             if (str_starts_with($child->getNameIndex($i), (string) $folder . '/')) {
@@ -46,6 +47,12 @@ foreach ($manifest->files->file as $file) {
         if ($child->getFromName((string) $language) === false) {
             throw new RuntimeException('Language missing');
         }
+    }
+    if ($id === 'com_attachmentscontentsearch') {
+        foreach (['admin/services/provider.php', 'admin/src/Controller/DisplayController.php', 'admin/src/View/Attachments/HtmlView.php', 'admin/src/Service/Report.php', 'admin/tmpl/attachments/default.php', 'admin/access.xml', 'admin/config.xml'] as $entry) {
+            if ($child->getFromName($entry) === false) { throw new RuntimeException('Component file missing: ' . $entry); }
+        }
+        if ((string) $pluginManifest->administration->menu['link'] !== 'option=com_attachmentscontentsearch') { throw new RuntimeException('Component menu missing'); }
     }
     if ($id === 'mod_attachmentscontent') {
         if ((string) $pluginManifest['client'] !== 'administrator' || $child->getFromName('mod_attachmentscontent.php') === false || $child->getFromName('tmpl/default.php') === false) {

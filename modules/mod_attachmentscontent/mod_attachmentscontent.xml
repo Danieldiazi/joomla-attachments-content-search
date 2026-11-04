@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="module" client="administrator" method="upgrade">
-<name>Attachments Content Search — Resumen</name><version>2026.10.3</version><author>Danieldiazi</author><license>GPL-3.0-or-later</license>
+<name>Attachments Content Search — Resumen</name><version>2026.11.2</version><author>Danieldiazi</author><license>GPL-3.0-or-later</license>
 <description>Resumen por nivel de acceso y listado de adjuntos. Publicar en cpanel. Solo administradores de Búsqueda inteligente y Contenido.</description>
 <files><filename module="mod_attachmentscontent">mod_attachmentscontent.php</filename><folder>tmpl</folder></files>
 <config><fields name="params"><fieldset name="basic"><field name="cache" type="hidden" default="0" /></fieldset></fields></config>

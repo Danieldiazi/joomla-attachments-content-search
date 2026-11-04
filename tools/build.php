@@ -75,6 +75,15 @@ $moduleZip->addFromString($moduleName . '.xml', versionedManifest($root . '/modu
 $moduleZip->addFile($root . '/LICENSE', 'LICENSE');
 $moduleZip->close();
 $children[] = $modulePath;
+$componentName = 'com_attachmentscontentsearch';
+$componentPath = $dist . '/' . $componentName . '.zip';
+$componentZip = new ZipArchive();
+if ($componentZip->open($componentPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) { throw new RuntimeException('Cannot create component archive'); }
+addTree($componentZip, $root . '/components/' . $componentName);
+$componentZip->addFromString('attachmentscontentsearch.xml', versionedManifest($root . '/components/' . $componentName . '/attachmentscontentsearch.xml', $version));
+$componentZip->addFile($root . '/LICENSE', 'LICENSE');
+$componentZip->close();
+$children[] = $componentPath;
 $output = $dist . '/pkg_attachmentscontentsearch-' . $version . '.zip';
 $zip = new ZipArchive();
 if ($zip->open($output, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
