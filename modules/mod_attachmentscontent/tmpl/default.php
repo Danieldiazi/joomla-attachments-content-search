@@ -25,7 +25,7 @@ $state = ($row->indexed_count ? 'Indexado' : 'Sin entrada en el índice') . ($ro
 <?php if ($title !== null):
 $route = $article ? RouteHelper::getArticleRoute((int) $row->parent_id, (int) $row->catid, $row->article_language) : RouteHelper::getCategoryRoute((int) $row->parent_id, $row->category_language);
 $public = Route::link('site', $route, false);
-$asset = $article ? 'com_content.article.' : 'com_categories.category.';
+$asset = $article ? 'com_content.article.' : 'com_content.category.';
 $edit = $article ? 'index.php?option=com_content&task=article.edit&id=' : 'index.php?option=com_categories&task=category.edit&extension=com_content&id=';
 ?><a href="<?= $escape($public) ?>" target="_blank" rel="noopener noreferrer">Ver página</a>
 <?php if ($user->authorise('core.edit', $asset . (int) $row->parent_id)): ?> · <a href="<?= $escape(Route::_($edit . (int) $row->parent_id, false)) ?>">Editar <?= $article ? 'artículo' : 'categoría' ?></a><?php endif; endif; ?></td></tr>
