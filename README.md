@@ -2,7 +2,7 @@
 
 Búsqueda dentro de archivos **DOCX y PDF con texto** de [Attachments](https://github.com/jmcameron/attachments), integrada en la búsqueda inteligente de Joomla. Sin Apache Tika ni servicios externos.
 
-**2026.10.3: un archivo ilegible o ausente no detiene el lote si también falla el registro de errores.** Las pruebas automatizadas comprueban extracción, consultas de permisos y el modelo real de búsqueda de Joomla. No sustituyen la prueba de instalación y funcionamiento en tu servidor.
+**2026.11.2: sección propia de administración con filtros y resumen conciso opcional en el inicio.** Las pruebas automatizadas comprueban extracción, consultas de permisos y el modelo real de búsqueda de Joomla. No sustituyen la prueba de instalación y funcionamiento en tu servidor.
 
 ## Requisitos
 
@@ -89,7 +89,7 @@ Al publicar una release, la acción **Build release installer** genera y adjunta
     composer install --no-dev --prefer-dist
     php tools/build.php
 
-El instalador se genera en dist/pkg_attachmentscontentsearch-2026.10.3.zip con sus dependencias. No hace falta Composer en el servidor de destino.
+El instalador se genera en dist/pkg_attachmentscontentsearch-2026.11.2.zip con sus dependencias. No hace falta Composer en el servidor de destino.
 
 ## Pruebas
 
@@ -103,6 +103,7 @@ Para las pruebas de integración, con SQLite en PHP:
     php tests/access.php ../joomla-cms
 php tests/queue.php ../joomla-cms
 php tests/selection.php ../joomla-cms
+php tests/report.php ../joomla-cms
 
 GitHub Actions ejecuta las pruebas en PHP 8.3 y 8.4 y publica el ZIP como artefacto.
 
@@ -125,8 +126,10 @@ GPL-3.0-or-later. [smalot/pdfparser](https://github.com/smalot/pdfparser) usa LG
 
 Proyecto independiente; no es una publicación oficial de Joomla ni de Attachments.
 
-## Panel de administración
+## Administración del índice de adjuntos
 
-El paquete incluye el módulo **Attachments Content Search — Resumen**. Tras instalar o actualizar, crea un módulo de administrador de este tipo en **Contenido → Módulos del administrador**, publícalo en la posición **cpanel** y selecciona el acceso administrativo apropiado. Solo muestra datos a usuarios con permisos de administración de Búsqueda inteligente y Contenido.
+Abre **Componentes → Attachments Content Search** para consultar el resumen global por niveles y el listado paginado. Puedes buscar por nombre de archivo o título del artículo/categoría, filtrar por acceso, estado de índice/cola y tipo o ID de página de origen. Los enlaces permiten ver o editar artículos y categorías según permisos. Esta sección y el módulo requieren administración de Attachments Content Search, Búsqueda inteligente y Contenido. Los permisos propios se configuran en Opciones del componente.
 
-Muestra todos los niveles, incluidos los excluidos, entradas reales del índice y estados de la cola existente. Permite filtrar pulsando un nivel, recorrer páginas de 25 adjuntos y abrir o editar sus artículos/categorías. Distingue el acceso del adjunto del acceso del padre; las categorías superiores también pueden restringir la visualización. No añade tablas ni modifica el índice o la cola. Si la cola no existe, lo indica; no la crea. Los estados de cola no son sumables con el total indexado y los archivos sin estado no se etiquetan como pendientes.
+El módulo **Attachments Content Search — Resumen** es opcional. Publícalo en cpanel para mostrar solo niveles incluidos, número de adjuntos indexados y sin indexar (todos los PDF/DOCX locales asociados a artículos o categorías), y un enlace a la sección completa. Al actualizar, el módulo existente adopta el formato conciso.
+
+La ampliación no crea tablas ni modifica el índice o la cola. Indexado significa que existe una entrada en Smart Search; no garantiza visibilidad pública. Los permisos de artículos y categorías superiores siguen aplicándose al buscar y descargar. Los estados de cola no deben sumarse a los indexados y los archivos sin estado no se etiquetan como pendientes.

@@ -17,8 +17,8 @@ El flujo **Build release installer** se ejecuta cuando se publica una release. C
 - Descarga el código del commit etiquetado, no el estado posterior de main.
 - Instala dependencias de producción con Composer.
 - Comprueba sintaxis, extracción y permisos contra el modelo real de Joomla 6.2.0.
-- Construye los dos plugins y el paquete exterior, incluyendo el lector PDF.
-- Usa la versión de la etiqueta en el nombre del instalador y en los tres manifiestos XML del archivo generado, sin modificar los archivos del repositorio.
+- Construye los dos plugins, el componente de administración, el módulo opcional y el paquete exterior, incluyendo el lector PDF.
+- Usa la versión de la etiqueta en el nombre del instalador y en todos los manifiestos XML del archivo generado, sin modificar los archivos del repositorio.
 - Valida el contenido y las versiones internas del paquete.
 - Adjunta el instalador a la release mediante el GITHUB_TOKEN del flujo, con permiso contents: write.
 
