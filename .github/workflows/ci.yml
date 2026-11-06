@@ -47,6 +47,7 @@ jobs:
       - run: php tests/queue.php ../joomla-cms
       - run: php tests/selection.php ../joomla-cms
       - run: php tests/report.php ../joomla-cms
+      - run: php tests/languages.php
       - name: Scope reconciliation on MySQL
         env:
           ACS_MYSQL_PASSWORD: acs_test_password

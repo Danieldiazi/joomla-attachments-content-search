@@ -91,6 +91,8 @@ if ($zip->open($output, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
 }
 $zip->addFromString('pkg_attachmentscontentsearch.xml', versionedManifest($packageSource, $version));
 $zip->addFile($root . '/package/script.php', 'script.php');
+addTree($zip, $root . '/package/language', 'language/');
+$zip->addFile($root . '/README.en.md', 'README.en.md');
 $zip->addFile($root . '/README.md', 'README.md');
 $zip->addFile($root . '/LICENSE', 'LICENSE');
 foreach ($children as $child) {
