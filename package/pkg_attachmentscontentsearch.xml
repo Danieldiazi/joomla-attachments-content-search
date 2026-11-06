@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <extension type="package" method="upgrade">
-  <name>Attachments Content Search</name>
+  <name>PKG_ATTACHMENTSCONTENTSEARCH</name>
   <packagename>attachmentscontentsearch</packagename>
   <author>Danieldiazi</author>
   <version>2026.11.2</version>
   <creationDate>2026-11</creationDate>
   <license>GNU General Public License version 3 or later</license>
-  <description>DOCX and PDF full-text search for Attachments with live access checks. Enable both included plugins after installation.</description>
+  <description>PKG_ATTACHMENTSCONTENTSEARCH_DESC</description>
+  <languages folder="language"><language tag="en-GB">en-GB/pkg_attachmentscontentsearch.sys.ini</language><language tag="es-ES">es-ES/pkg_attachmentscontentsearch.sys.ini</language></languages>
   <scriptfile>script.php</scriptfile>
   <blockChildUninstall>true</blockChildUninstall>
   <files folder="packages">

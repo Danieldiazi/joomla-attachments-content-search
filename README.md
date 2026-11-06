@@ -1,5 +1,7 @@
 # Joomla Attachments Content Search
 
+[Español](README.md) · [English](README.en.md)
+
 Búsqueda dentro de archivos **DOCX y PDF con texto** de [Attachments](https://github.com/jmcameron/attachments), integrada en la búsqueda inteligente de Joomla. Sin Apache Tika ni servicios externos.
 
 **2026.11.2: sección propia de administración con filtros y resumen conciso opcional en el inicio.** Las pruebas automatizadas comprueban extracción, consultas de permisos y el modelo real de búsqueda de Joomla. No sustituyen la prueba de instalación y funcionamiento en tu servidor.
@@ -133,3 +135,9 @@ Abre **Componentes → Attachments Content Search** para consultar el resumen gl
 El módulo **Attachments Content Search — Resumen** es opcional. Publícalo en cpanel para mostrar solo niveles incluidos, número de adjuntos indexados y sin indexar (todos los PDF/DOCX locales asociados a artículos o categorías), y un enlace a la sección completa. Al actualizar, el módulo existente adopta el formato conciso.
 
 La ampliación no crea tablas ni modifica el índice o la cola. Indexado significa que existe una entrada en Smart Search; no garantiza visibilidad pública. Los permisos de artículos y categorías superiores siguen aplicándose al buscar y descargar. Los estados de cola no deben sumarse a los indexados y los archivos sin estado no se etiquetan como pendientes.
+
+## Idiomas
+
+La interfaz, los avisos de instalación y la ayuda de consola utilizan archivos de idioma nativos de Joomla: **es-ES** e **en-GB**. Se usa el idioma de la aplicación, con inglés como idioma de respaldo de Joomla. Los nombres de archivo, títulos y niveles de acceso creados por el usuario no se traducen. Las acciones de consola, claves JSON, estados persistidos y códigos de error conservan sus identificadores para no romper automatizaciones.
+
+Para añadir otro idioma, consulta [la guía de traducción](docs/TRANSLATING.md).

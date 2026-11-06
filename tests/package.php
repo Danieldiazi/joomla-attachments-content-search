@@ -14,6 +14,12 @@ if (basename($path) !== 'pkg_attachmentscontentsearch-' . $version . '.zip') {
 }
 $temp = dirname(__DIR__) . '/build/package-test';
 @mkdir($temp, 0775, true);
+foreach ($manifest->languages->language as $language) {
+    if ($zip->getFromName((string) $manifest->languages['folder'] . '/' . (string) $language) === false) {
+        throw new RuntimeException('Package language missing');
+    }
+}
+if ($zip->getFromName('README.en.md') === false) { throw new RuntimeException('English README missing'); }
 foreach ($manifest->files->file as $file) {
     $bytes = $zip->getFromName('packages/' . (string) $file);
     if ($bytes === false) {
@@ -43,8 +49,11 @@ foreach ($manifest->files->file as $file) {
             throw new RuntimeException('Manifest folder missing: ' . $folder);
         }
     }
-    foreach (($pluginManifest->languages->language ?? []) as $language) {
-        if ($child->getFromName((string) $language) === false) {
+    $languages = $id === 'com_attachmentscontentsearch' ? $pluginManifest->administration->languages : $pluginManifest->languages;
+    foreach ($languages->language as $language) {
+        $folder = (string) $languages['folder'];
+        $entry = ($folder !== '' ? $folder . '/' : '') . (string) $language;
+        if ($child->getFromName($entry) === false) {
             throw new RuntimeException('Language missing');
         }
     }

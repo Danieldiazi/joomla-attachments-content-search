@@ -38,7 +38,7 @@ final class Report
         }
         $summary = $db->setQuery($summaryQuery->group('a.access'))->loadObjectList('access');
         $levels = $db->setQuery('SELECT id, title FROM #__viewlevels ORDER BY ordering, id')->loadObjectList('id');
-        foreach ($summary as $id => $row) { if (!isset($levels[$id])) { $levels[$id] = (object) ['id' => $id, 'title' => 'Nivel #' . $id]; } }
+        foreach ($summary as $id => $row) { if (!isset($levels[$id])) { $levels[$id] = (object) ['id' => $id, 'title' => null]; } }
         if (!$details) {
             $indexedTotal = array_sum(array_map(static fn($row) => (int) $row->indexed_count, $summary));
             $total = array_sum(array_map(static fn($row) => (int) $row->total, $summary));
