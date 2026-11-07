@@ -93,7 +93,10 @@ echo "$testCount access and integration checks passed.\n";
 
 Joomla\CMS\Factory::$container = new Joomla\DI\Container();
 Joomla\CMS\Factory::$container->set(Joomla\Database\DatabaseInterface::class, $db);
-Joomla\CMS\Factory::$language = new Joomla\CMS\Language\Language('en-GB');
+Joomla\CMS\Factory::$language = new class {
+    public function getTag(): string { return 'en-GB'; }
+    public function _(string $key): string { return $key; }
+};
 // Exercise the real Joomla SearchModel query, result conversion, totals and paging.
 $components = new ReflectionProperty(Joomla\CMS\Component\ComponentHelper::class, 'components');
 $components->setValue(null, [
