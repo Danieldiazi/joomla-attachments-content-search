@@ -18,7 +18,6 @@ final class WorkerCommand extends AbstractCommand
     public function __construct(private DatabaseInterface $db) { parent::__construct(); }
     protected function configure(): void
     {
-        \Joomla\CMS\Factory::getApplication()->getLanguage()->load('plg_system_attachmentscontentguard', JPATH_PLUGINS . '/system/attachmentscontentguard');
         $this->setHidden(true);
         $this->addArgument('id', InputArgument::REQUIRED, Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_ID'));
     }

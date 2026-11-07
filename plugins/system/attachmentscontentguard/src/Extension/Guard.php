@@ -76,6 +76,7 @@ final class Guard extends CMSPlugin implements SubscriberInterface
     {
         $app = $this->getApplication();
         if ($app instanceof \Joomla\Console\Application) {
+            $app->getLanguage()?->load('plg_system_attachmentscontentguard', JPATH_PLUGINS . '/system/attachmentscontentguard');
             $app->addCommand(new \Danieldiazi\Plugin\System\AttachmentsContentGuard\Console\IndexCommand($this->getDatabase()));
             $app->addCommand(new \Danieldiazi\Plugin\System\AttachmentsContentGuard\Console\WorkerCommand($this->getDatabase()));
         }

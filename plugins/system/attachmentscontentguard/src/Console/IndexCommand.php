@@ -20,7 +20,6 @@ final class IndexCommand extends AbstractCommand
     public function __construct(private DatabaseInterface $db) { parent::__construct(); }
     protected function configure(): void
     {
-        \Joomla\CMS\Factory::getApplication()->getLanguage()->load('plg_system_attachmentscontentguard', JPATH_PLUGINS . '/system/attachmentscontentguard');
         $this->setDescription(Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_DESC'));
         $this->addArgument('action', InputArgument::OPTIONAL, Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_ACTION'), 'status');
         $this->addOption('limit', null, InputOption::VALUE_REQUIRED, Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_LIMIT'), '100');
