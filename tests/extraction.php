@@ -50,6 +50,11 @@ foreach ([
     file_put_contents($dir . '/' . $name, $contents);
     check($extractor->extract($dir . '/' . $name, $name, $dir) === $expected, 'Extracts ' . $name);
 }
+$sparseCsv = $dir . '/sparse.csv';
+file_put_contents($sparseCsv, "name,value\n" . str_repeat(str_repeat(',', 100) . "\n", 10) . "fishing,river\n");
+check((new TextExtractor(maxCharacters: 24))->extract($sparseCsv, 'sparse.csv', $dir) === 'name value fishing river', 'CSV empty cells and rows do not consume the text limit');
+check((new TextExtractor(maxCharacters: 18))->extract($sparseCsv, 'sparse.csv', $dir) === 'name value fishing', 'CSV still respects the normalized character limit');
+
 file_put_contents($dir . '/binary.txt', "binary\0data");
 rejects(fn() => $extractor->extract($dir . '/binary.txt', 'binary.txt', $dir), 'Rejects binary text attachments');
 

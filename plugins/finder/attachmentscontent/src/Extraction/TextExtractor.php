@@ -51,8 +51,13 @@ final class TextExtractor
             default => throw new RuntimeException('UNSUPPORTED_FORMAT'),
         };
         $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
-        $text = trim(preg_replace('/[\p{Z}\s]+/u', ' ', $text) ?? '');
+        $text = $this->normalizeWhitespace($text);
         return trim(mb_substr($text, 0, $this->maxCharacters, 'UTF-8'));
+    }
+
+    private function normalizeWhitespace(string $text): string
+    {
+        return trim(preg_replace('/[\p{Z}\s]+/u', ' ', $text) ?? '');
     }
 
     private function plainText(string $path): string
@@ -89,9 +94,16 @@ final class TextExtractor
             $separator = count($semicolon ?: []) > count($comma ?: []) ? ';' : ',';
             rewind($stream);
             $text = '';
+            $characters = 0;
             while (($row = fgetcsv($stream, separator: $separator, escape: '')) !== false) {
-                $text .= implode(' ', $row) . "\n";
-                if (strlen($text) >= $this->maxCharacters * 4) {
+                $normalized = $this->normalizeWhitespace(implode(' ', $row));
+                if ($normalized === '') {
+                    continue;
+                }
+                $space = $text === '' ? '' : ' ';
+                $text .= $space . $normalized;
+                $characters += strlen($space) + mb_strlen($normalized, 'UTF-8');
+                if ($characters >= $this->maxCharacters) {
                     break;
                 }
             }
