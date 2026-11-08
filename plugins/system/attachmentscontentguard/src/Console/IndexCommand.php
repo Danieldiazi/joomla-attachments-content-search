@@ -5,6 +5,7 @@ namespace Danieldiazi\Plugin\System\AttachmentsContentGuard\Console;
 use Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\FileLock;
 use Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\ProcessRunner;
 use Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\Queue;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\Console\Command\AbstractCommand;
 use Joomla\Database\DatabaseInterface;
@@ -19,25 +20,25 @@ final class IndexCommand extends AbstractCommand
     public function __construct(private DatabaseInterface $db) { parent::__construct(); }
     protected function configure(): void
     {
-        $this->setDescription('Persistent attachment indexing queue: enqueue, run, status, failures, retry, refresh, sync.');
-        $this->addArgument('action', InputArgument::OPTIONAL, 'Queue action', 'status');
-        $this->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Maximum files per invocation', '100');
-        $this->addOption('timeout', null, InputOption::VALUE_REQUIRED, 'Wall-clock seconds per file', '60');
-        $this->addOption('after', null, InputOption::VALUE_REQUIRED, 'Failures after attachment ID (100 per page)', '0');
+        $this->setDescription(Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_DESC'));
+        $this->addArgument('action', InputArgument::OPTIONAL, Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_ACTION'), 'status');
+        $this->addOption('limit', null, InputOption::VALUE_REQUIRED, Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_LIMIT'), '100');
+        $this->addOption('timeout', null, InputOption::VALUE_REQUIRED, Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_TIMEOUT'), '60');
+        $this->addOption('after', null, InputOption::VALUE_REQUIRED, Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_AFTER'), '0');
     }
     protected function doExecute(InputInterface $input, OutputInterface $output): int
     {
         $action = $input->getArgument('action');
         if (!in_array($action, ['enqueue', 'run', 'status', 'failures', 'retry', 'refresh', 'sync'], true)) {
-            throw new \InvalidArgumentException('Unknown queue action.');
+            throw new \InvalidArgumentException(Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_UNKNOWN'));
         }
         $limit = filter_var($input->getOption('limit'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 10000]]);
         $timeout = filter_var($input->getOption('timeout'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 3600]]);
         if ($limit === false || $timeout === false) {
-            throw new \InvalidArgumentException('Use --limit=1..10000 and --timeout=1..3600.');
+            throw new \InvalidArgumentException(Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_RANGE'));
         }
         if (!PluginHelper::isEnabled('finder', 'attachmentscontent')) {
-            throw new \RuntimeException('Enable Smart Search - Attachments Content Search first.');
+            throw new \RuntimeException(Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_ENABLE'));
         }
         $queue = new Queue($this->db);
         $base = rtrim((string) $this->getApplication()->get('tmp_path'), '/\\')
@@ -65,14 +66,14 @@ final class IndexCommand extends AbstractCommand
             case 'sync':
                 break;
             case 'enqueue':
-                $output->writeln('Added: ' . $queue->enqueue(\Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\IndexSelection::load($this->db)));
+                $output->writeln(Text::sprintf('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_ADDED', $queue->enqueue(\Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\IndexSelection::load($this->db))));
                 break;
             case 'retry':
                 $queue->retry();
                 break;
             case 'refresh':
                 $queue->refresh();
-                $output->writeln('Added: ' . $queue->enqueue());
+                $output->writeln(Text::sprintf('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_ADDED', $queue->enqueue()));
                 break;
             case 'run':
                 $runner = new ProcessRunner();

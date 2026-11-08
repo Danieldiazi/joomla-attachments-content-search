@@ -1,6 +1,7 @@
 <?php
 /** @license GPL-3.0-or-later */
 namespace Danieldiazi\Component\AttachmentsContentSearch\Administrator\View\Attachments;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
@@ -13,7 +14,7 @@ final class HtmlView extends BaseHtmlView
     public function display($tpl = null)
     {
         $app = Factory::getApplication();
-        if (!Report::canView($app->getIdentity())) { throw new \RuntimeException('Acceso no autorizado', 403); }
+        if (!Report::canView($app->getIdentity())) { throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403); }
         ToolbarHelper::title('Attachments Content Search', 'search');
         ToolbarHelper::preferences('com_attachmentscontentsearch');
         $input = $app->getInput();
@@ -24,7 +25,7 @@ final class HtmlView extends BaseHtmlView
                 'kind' => $input->getCmd('kind', ''), 'parent' => $input->getInt('parent', 0),
             ]);
         } catch (\Throwable $error) {
-            $app->enqueueMessage('No se pudo consultar el índice. Comprueba que Attachments y Búsqueda inteligente están instalados.', 'error');
+            $app->enqueueMessage(Text::_('COM_ATTACHMENTSCONTENTSEARCH_ERROR'), 'error');
             return;
         }
         parent::display($tpl);

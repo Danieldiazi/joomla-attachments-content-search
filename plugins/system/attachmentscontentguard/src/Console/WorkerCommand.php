@@ -3,6 +3,7 @@
 namespace Danieldiazi\Plugin\System\AttachmentsContentGuard\Console;
 
 use Danieldiazi\Plugin\System\AttachmentsContentGuard\Queue\FileLock;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\Console\Command\AbstractCommand;
@@ -18,7 +19,7 @@ final class WorkerCommand extends AbstractCommand
     protected function configure(): void
     {
         $this->setHidden(true);
-        $this->addArgument('id', InputArgument::REQUIRED, 'Attachment ID');
+        $this->addArgument('id', InputArgument::REQUIRED, Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_CLI_ID'));
     }
     protected function doExecute(InputInterface $input, OutputInterface $output): int
     {

@@ -4,6 +4,7 @@ namespace Danieldiazi\Plugin\System\AttachmentsContentGuard\Extension;
 
 use Danieldiazi\Plugin\System\AttachmentsContentGuard\Factory\GuardedFactoryProvider;
 use Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\AccessPolicy;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Plugin\CMSPlugin;
@@ -14,6 +15,7 @@ use Joomla\Event\SubscriberInterface;
 final class Guard extends CMSPlugin implements SubscriberInterface
 {
     use DatabaseAwareTrait;
+    protected $autoloadLanguage = true;
 
     public static function getSubscribedEvents(): array
     {
@@ -39,7 +41,7 @@ final class Guard extends CMSPlugin implements SubscriberInterface
         $complete = $this->selectionSynchronizer()->synchronize();
         if (!$complete) {
             $this->getApplication()->enqueueMessage(
-                'Attachments Content Search: the new access-level selection is active. Index cleanup will finish after the current file, or on the next administrator request.',
+                Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_SYNC_ACTIVE'),
                 'notice'
             );
         }
@@ -58,7 +60,7 @@ final class Guard extends CMSPlugin implements SubscriberInterface
                 $sync->synchronize();
             }
         } catch (\Throwable $error) {
-            $app->enqueueMessage('Attachments Content Search: access-level index cleanup is pending. Check the database and temporary directory, then run attachments:index sync.', 'warning');
+            $app->enqueueMessage(Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_SYNC_PENDING'), 'warning');
         }
     }
 
@@ -74,6 +76,7 @@ final class Guard extends CMSPlugin implements SubscriberInterface
     {
         $app = $this->getApplication();
         if ($app instanceof \Joomla\Console\Application) {
+            $app->getLanguage()?->load('plg_system_attachmentscontentguard', JPATH_PLUGINS . '/system/attachmentscontentguard');
             $app->addCommand(new \Danieldiazi\Plugin\System\AttachmentsContentGuard\Console\IndexCommand($this->getDatabase()));
             $app->addCommand(new \Danieldiazi\Plugin\System\AttachmentsContentGuard\Console\WorkerCommand($this->getDatabase()));
         }
@@ -124,7 +127,7 @@ final class Guard extends CMSPlugin implements SubscriberInterface
         $query = AccessPolicy::attachmentQuery($db, $app->getIdentity()->getAuthorisedViewLevels(), Factory::getDate()->toSql());
         $query->where('a.id = ' . $input->getInt('id'));
         if (!ComponentHelper::getParams('com_attachments')->get('secure', false) || !$db->setQuery($query)->loadResult()) {
-            throw new \RuntimeException('Document not available.', 404);
+            throw new \RuntimeException(Text::_('PLG_SYSTEM_ATTACHMENTSCONTENTGUARD_UNAVAILABLE'), 404);
         }
         $app->setHeader('Cache-Control', 'private, no-store', true);
     }

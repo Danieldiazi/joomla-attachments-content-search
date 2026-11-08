@@ -5,6 +5,7 @@ namespace Danieldiazi\Plugin\Finder\AttachmentsContent\Extension;
 use Danieldiazi\Plugin\Finder\AttachmentsContent\Extraction\TextExtractor;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Log\Log;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\Component\Finder\Administrator\Indexer\Adapter;
 use Joomla\Component\Finder\Administrator\Indexer\Result;
@@ -44,7 +45,7 @@ final class AttachmentsContent extends Adapter implements SubscriberInterface
         if (!ComponentHelper::isEnabled('com_attachments')
             || !PluginHelper::isEnabled('system', 'attachmentscontentguard')
             || !ComponentHelper::getParams('com_attachments')->get('secure', false)) {
-            throw new \RuntimeException('Attachments Content Search requires Attachments secure downloads and the system guard plugin.');
+            throw new \RuntimeException(Text::_('PLG_FINDER_ATTACHMENTSCONTENT_REQUIREMENTS'));
         }
         return true;
     }
@@ -70,7 +71,7 @@ final class AttachmentsContent extends Adapter implements SubscriberInterface
         try {
             return parent::onStartIndex();
         } catch (\Throwable $error) {
-            throw new \RuntimeException('Attachments Content Search start: ' . $error->getMessage(), 0, $error);
+            throw new \RuntimeException(Text::sprintf('PLG_FINDER_ATTACHMENTSCONTENT_START_ERROR', $error->getMessage()), 0, $error);
         }
     }
 
@@ -79,7 +80,7 @@ final class AttachmentsContent extends Adapter implements SubscriberInterface
         try {
             return parent::onBuildIndex();
         } catch (\Throwable $error) {
-            throw new \RuntimeException('Attachments Content Search batch: ' . $error->getMessage(), 0, $error);
+            throw new \RuntimeException(Text::sprintf('PLG_FINDER_ATTACHMENTSCONTENT_BATCH_ERROR', $error->getMessage()), 0, $error);
         }
     }
     /** Index one durable job without Finder's browser batch/session offsets. */
