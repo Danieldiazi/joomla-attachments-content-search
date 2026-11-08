@@ -32,6 +32,27 @@ rejects(fn() => $extractor->extract($dir . '/broken.docx', 'broken.docx', $dir),
 rejects(fn() => $extractor->extract($dir . '/fishing.docx', 'fishing.doc', $dir), 'Rejects legacy DOC');
 check(mb_strlen((new TextExtractor(20971520, 33554432, 5))->extract($dir . '/fishing.docx', 'fishing.docx', $dir)) === 5, 'Bounds extracted text length');
 
+$odtPath = $dir . '/fishing.odt';
+$odt = new ZipArchive();
+$odt->open($odtPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+$odt->addFromString('content.xml', '<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"><office:body><office:text><text:h>Informe</text:h><text:p>pes<text:span>ca</text:span><text:s/>marítima</text:p></office:text></office:body></office:document-content>');
+$odt->close();
+check($extractor->extract($odtPath, 'FISHING.ODT', $dir) === 'Informe pesca marítima', 'ODT separates paragraphs and joins spans');
+rejects(fn() => (new TextExtractor(20971520, 10))->extract($odtPath, 'fishing.odt', $dir), 'ODT respects the uncompressed XML limit');
+
+foreach ([
+    'fishing.txt' => ["\xEF\xBB\xBFpesca marítima", 'pesca marítima'],
+    'legacy.txt' => ["pesca mar\xEDtima", 'pesca marítima'],
+    'fishing.md' => ["# Pesca\n\n- río", '# Pesca - río'],
+    'comma.csv' => ["zona,nombre\nnorte,\"río, mar\"", 'zona nombre norte río, mar'],
+    'semicolon.csv' => ["zona;nombre\nnorte;\"río; mar\"", 'zona nombre norte río; mar'],
+] as $name => [$contents, $expected]) {
+    file_put_contents($dir . '/' . $name, $contents);
+    check($extractor->extract($dir . '/' . $name, $name, $dir) === $expected, 'Extracts ' . $name);
+}
+file_put_contents($dir . '/binary.txt', "binary\0data");
+rejects(fn() => $extractor->extract($dir . '/binary.txt', 'binary.txt', $dir), 'Rejects binary text attachments');
+
 // A real, minimal PDF with a text stream and a valid cross-reference table.
 function pdf(string $text): string {
     $stream = "BT /F1 12 Tf 72 720 Td (" . $text . ") Tj ET";

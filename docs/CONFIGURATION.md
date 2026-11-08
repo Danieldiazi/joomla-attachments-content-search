@@ -13,13 +13,13 @@
 2. En Joomla, abre **Sistema → Instalar → Extensiones** y sube ese ZIP.
 3. Espera el mensaje de instalación correcta. El paquete instala los plugins Finder y System Guard, con sus dependencias PDF incluidas.
 
-## 3. Permitir subir DOCX y PDF
+## 3. Permitir subir archivos compatibles
 
 En **Contenido → Multimedia → Opciones**, revisa:
 
-- **Extensiones permitidas**: incluye docx y pdf, conservando los formatos existentes.
+- **Extensiones permitidas**: incluye docx, pdf, odt, txt, csv y md, conservando los formatos existentes.
 - **Extensiones de documentos permitidas (tipos de archivo)**: incluye docx y pdf.
-- **Tipos de MIME permitidos**: incluye application/pdf y application/vnd.openxmlformats-officedocument.wordprocessingml.document.
+- **Tipos de MIME permitidos**: incluye application/pdf y application/vnd.openxmlformats-officedocument.wordprocessingml.document. Para los nuevos formatos, añade `application/vnd.oasis.opendocument.text`, `text/plain`, `text/csv` y `text/markdown` según los tipos detectados por tu servidor.
 - Mantén activadas las comprobaciones de MIME y las restricciones de subidas.
 
 Si Joomla muestra Illegal file Mime type al subir un DOCX, añade su MIME exacto; no desactives las comprobaciones para resolverlo.
@@ -63,7 +63,7 @@ Un usuario debe tener acceso al adjunto y a sus padres. Por ejemplo, Registered 
 Al subir un archivo en Attachments:
 
 - Selecciona un artículo o categoría de com_content.
-- Sube un DOCX o un PDF con texto seleccionable.
+- Sube un DOCX, un PDF con texto seleccionable, un ODT, un TXT, un CSV o un Markdown (`.md`).
 - Marca **Published: Sí**.
 - Selecciona su nivel de **Acceso** y guarda.
 

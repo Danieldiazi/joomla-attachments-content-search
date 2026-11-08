@@ -2,7 +2,7 @@
 
 [Español](README.md) · [English](README.en.md)
 
-Búsqueda dentro de archivos **DOCX y PDF con texto** de [Attachments](https://github.com/jmcameron/attachments), integrada en la búsqueda inteligente de Joomla. Sin Apache Tika ni servicios externos.
+Búsqueda dentro de archivos **DOCX, PDF con texto, ODT, TXT, CSV y Markdown** de [Attachments](https://github.com/jmcameron/attachments), integrada en la búsqueda inteligente de Joomla. Sin Apache Tika ni servicios externos.
 
 **2026.11.2: sección propia de administración con filtros y resumen conciso opcional en el inicio.** Las pruebas automatizadas comprueban extracción, consultas de permisos y el modelo real de búsqueda de Joomla. No sustituyen la prueba de instalación y funcionamiento en tu servidor.
 
@@ -39,6 +39,9 @@ Una búsqueda de **pesca** puede encontrar un documento cuyo nombre no contiene 
 
 - DOCX: cuerpo, tablas, cabeceras, pies y notas al pie/finales; reconoce palabras divididas entre segmentos de formato.
 - PDF: texto extraíble. Los escaneados necesitan OCR, fuera del alcance de esta versión.
+- ODT: texto del cuerpo, incluidas listas y tablas.
+- TXT y Markdown (`.md`): texto plano UTF-8 o Windows-1252.
+- CSV: cabeceras y valores, con separador coma o punto y coma.
 - No procesa DOC antiguos, archivos cifrados, enlaces externos ni adjuntos de otros componentes.
 - Un documento vacío o que falla al extraer se omite. Se registra únicamente su ID y el tipo de error, sin contenido ni rutas.
 - Límite predeterminado: **20 MB por archivo**, configurable hasta 100 MB. XML DOCX descomprimido: 32 MB. Texto: 2 millones de caracteres, truncando el exceso.
@@ -60,7 +63,7 @@ Se desactivan las sugerencias automáticas y propuestas de búsqueda alternativa
 
 Las páginas de búsqueda y descargas se excluyen de la caché de página de Joomla y envían **Cache-Control: private, no-store**. Se conserva la caché de otras páginas. Un proxy/CDN o caché de terceros debe respetar estas exclusiones. Vacía cualquier caché de búsqueda anterior al instalar.
 
-Al descargar un DOCX/PDF local de com_content se comprueban otra vez el adjunto y sus padres. Attachments entrega el archivo mediante su controlador habitual. No se publican rutas físicas ni copias de texto.
+Al descargar un archivo local compatible de com_content se comprueban otra vez el adjunto y sus padres. Attachments entrega el archivo mediante su controlador habitual. No se publican rutas físicas ni copias de texto.
 
 El índice contiene texto extraído: protégelo junto a la base de datos y sus copias de seguridad.
 
@@ -132,7 +135,7 @@ Proyecto independiente; no es una publicación oficial de Joomla ni de Attachmen
 
 Abre **Componentes → Attachments Content Search** para consultar el resumen global por niveles y el listado paginado. Puedes buscar por nombre de archivo o título del artículo/categoría, filtrar por acceso, estado de índice/cola y tipo o ID de página de origen. Los enlaces permiten ver o editar artículos y categorías según permisos. Esta sección y el módulo requieren administración de Attachments Content Search, Búsqueda inteligente y Contenido. Los permisos propios se configuran en Opciones del componente.
 
-El módulo **Attachments Content Search — Resumen** es opcional. Publícalo en cpanel para mostrar solo niveles incluidos, número de adjuntos indexados y sin indexar (todos los PDF/DOCX locales asociados a artículos o categorías), y un enlace a la sección completa. Al actualizar, el módulo existente adopta el formato conciso.
+El módulo **Attachments Content Search — Resumen** es opcional. Publícalo en cpanel para mostrar solo niveles incluidos, número de adjuntos indexados y sin indexar (todos los archivos locales compatibles asociados a artículos o categorías), y un enlace a la sección completa. Al actualizar, el módulo existente adopta el formato conciso.
 
 La ampliación no crea tablas ni modifica el índice o la cola. Indexado significa que existe una entrada en Smart Search; no garantiza visibilidad pública. Los permisos de artículos y categorías superiores siguen aplicándose al buscar y descargar. Los estados de cola no deben sumarse a los indexados y los archivos sin estado no se etiquetan como pendientes.
 

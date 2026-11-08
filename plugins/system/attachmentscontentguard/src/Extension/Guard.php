@@ -2,6 +2,8 @@
 /** @license GPL-3.0-or-later */
 namespace Danieldiazi\Plugin\System\AttachmentsContentGuard\Extension;
 
+use Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\AttachmentFormats;
+
 use Danieldiazi\Plugin\System\AttachmentsContentGuard\Factory\GuardedFactoryProvider;
 use Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\AccessPolicy;
 use Joomla\CMS\Language\Text;
@@ -121,7 +123,7 @@ final class Guard extends CMSPlugin implements SubscriberInterface
         $recordQuery = $db->createQuery()->select('*')->from('#__attachments')->where('id = ' . $input->getInt('id'));
         $record = $db->setQuery($recordQuery)->loadObject();
         if ($record && ($record->uri_type !== 'file' || $record->parent_type !== 'com_content'
-            || !in_array(strtolower(pathinfo($record->filename, PATHINFO_EXTENSION)), ['docx', 'pdf'], true))) {
+            || AttachmentFormats::mime($record->filename) === null)) {
             return;
         }
         $query = AccessPolicy::attachmentQuery($db, $app->getIdentity()->getAuthorisedViewLevels(), Factory::getDate()->toSql());

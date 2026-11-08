@@ -2,7 +2,7 @@
 
 [Español](README.md) · [English](README.en.md)
 
-Search inside **DOCX and text-based PDF files** managed by [Attachments](https://github.com/jmcameron/attachments), integrated with Joomla Smart Search. No Apache Tika or external services.
+Search inside **DOCX, text-based PDF, ODT, TXT, CSV and Markdown files** managed by [Attachments](https://github.com/jmcameron/attachments), integrated with Joomla Smart Search. No Apache Tika or external services.
 
 **2026.11.2: dedicated administration section with filters and an optional concise dashboard summary.** Automated tests cover extraction, access queries and Joomla's real search model. They do not replace installation and functional testing on your server.
 
@@ -39,6 +39,9 @@ Searching for **fishing** can find a document whose filename does not contain th
 
 - DOCX: body, tables, headers, footers, footnotes and endnotes; words split across formatting runs are recognised.
 - PDF: extractable text. Scanned documents require OCR, outside this version's scope.
+- ODT: body text, including lists and tables.
+- TXT and Markdown (`.md`): UTF-8 or Windows-1252 plain text.
+- CSV: headers and values, with comma or semicolon separators.
 - Legacy DOC files, encrypted files, external links and attachments from other components are not processed.
 - Empty documents and extraction failures are skipped. Logs contain only the attachment ID and error type, without contents or paths.
 - Default limit: **20 MB per file**, configurable up to 100 MB. Uncompressed DOCX XML: 32 MB. Text: two million characters; excess text is truncated.

@@ -2,6 +2,8 @@
 /** @license GPL-3.0-or-later */
 namespace Danieldiazi\Plugin\Finder\AttachmentsContent\Extension;
 
+use Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\AttachmentFormats;
+
 use Danieldiazi\Plugin\Finder\AttachmentsContent\Extraction\TextExtractor;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Log\Log;
@@ -138,7 +140,7 @@ final class AttachmentsContent extends Adapter implements SubscriberInterface
         if ($item->uri_type !== 'file' || $item->parent_type !== 'com_content'
             || !in_array($item->parent_entity, ['article', 'category'], true)
             || (int) $item->state !== 1
-            || !in_array(strtolower(pathinfo($item->filename, PATHINFO_EXTENSION)), ['docx', 'pdf'], true)) {
+            || AttachmentFormats::mime($item->filename) === null) {
             return;
         }
         try {
@@ -176,8 +178,7 @@ final class AttachmentsContent extends Adapter implements SubscriberInterface
         $result->language = '*';
         $result->start_date = $item->start_date;
         $result->params = new Registry();
-        $result->mime = strtolower(pathinfo($item->filename, PATHINFO_EXTENSION)) === 'pdf'
-            ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        $result->mime = AttachmentFormats::mime($item->filename);
         $result->addTaxonomy('Type', 'Attachment document');
         $access = $this->getDatabase()->setQuery('SELECT access FROM #__attachments WHERE id = ' . $id)->loadResult();
         if ($access === null || !\Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\IndexSelection::load($this->getDatabase())->allows((int) $access)) {

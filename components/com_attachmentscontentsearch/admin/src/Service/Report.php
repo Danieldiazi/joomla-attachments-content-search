@@ -1,6 +1,8 @@
 <?php
 /** @license GPL-3.0-or-later */
 namespace Danieldiazi\Component\AttachmentsContentSearch\Administrator\Service;
+
+use Danieldiazi\Plugin\System\AttachmentsContentGuard\Security\AttachmentFormats;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Registry\Registry;
 defined('_JEXEC') or die;
@@ -28,7 +30,7 @@ final class Report
         $indexed = 'EXISTS (SELECT 1 FROM #__finder_links AS l WHERE l.url = ' . $url . ')';
         $base = $db->createQuery()->from('#__attachments AS a')
             ->where("a.parent_type = 'com_content'")->where("a.parent_entity IN ('article', 'category')")
-            ->where("a.uri_type = 'file'")->where("(LOWER(a.filename) LIKE '%.pdf' OR LOWER(a.filename) LIKE '%.docx')");
+            ->where("a.uri_type = 'file'")->where(AttachmentFormats::condition($db));
         if ($hasQueue) { $base->leftJoin('#__attachmentscontent_queue AS q ON q.attachment_id = a.id'); }
         $status = $hasQueue ? 'q.status' : 'NULL';
         $summaryQuery = clone $base;
