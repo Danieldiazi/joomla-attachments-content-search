@@ -31,7 +31,7 @@ sql('CREATE TABLE t_categories (id INTEGER PRIMARY KEY, extension TEXT, lft INTE
 sql('CREATE TABLE t_finder_links (link_id INTEGER PRIMARY KEY, url TEXT, access INTEGER)');
 sql("INSERT INTO t_categories VALUES (1, 'system', 0, 11, 1, 1), (2, 'com_content', 1, 8, 1, 1), (3, 'com_content', 2, 3, 1, 7), (4, 'com_content', 4, 7, 1, 1), (5, 'com_content', 5, 6, 1, 1)");
 sql("INSERT INTO t_content VALUES (10, 2, 1, 1, NULL, NULL), (11, 3, 1, 1, NULL, NULL), (12, 5, 1, 1, NULL, NULL)");
-sql("INSERT INTO t_attachments VALUES (1, 'public.docx', 'file', 'com_content', 'article', 10, 1, 1), (2, 'private.pdf', 'file', 'com_content', 'article', 10, 1, 3), (3, 'category.docx', 'file', 'com_content', 'article', 11, 1, 1), (4, 'ancestor.docx', 'file', 'com_content', 'article', 12, 1, 1), (5, 'category.pdf', 'file', 'com_content', 'category', 2, 1, 3)");
+sql("INSERT INTO t_attachments VALUES (1, 'public.docx', 'file', 'com_content', 'article', 10, 1, 1), (2, 'private.pdf', 'file', 'com_content', 'article', 10, 1, 3), (3, 'category.docx', 'file', 'com_content', 'article', 11, 1, 1), (4, 'ancestor.TXT', 'file', 'com_content', 'article', 12, 1, 1), (5, 'category.pdf', 'file', 'com_content', 'category', 2, 1, 3)");
 foreach (range(1, 5) as $id) {
     sql('INSERT INTO t_finder_links VALUES (' . $id . ', ' . $db->quote(AccessPolicy::URL_PREFIX . $id) . ', 0)');
 }

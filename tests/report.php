@@ -18,7 +18,7 @@ try {
     reportSql("INSERT INTO #__viewlevels VALUES (1,'Público',1),(3,'Registrados',2)");
     reportSql("INSERT INTO #__content VALUES (10,'Memoria anual',3,20,'*')");
     reportSql("INSERT INTO #__categories VALUES (20,'Informes',3,'*','com_content')");
-    reportSql("INSERT INTO #__attachments VALUES (1,'informe.pdf',1,'com_content','article',10,'file'),(2,'datos.docx',3,'com_content','category',20,'file'),(3,'viejo.doc',1,'com_content','article',10,'file'),(4,'externo.pdf',1,'com_content','article',10,'url')");
+    reportSql("INSERT INTO #__attachments VALUES (1,'informe.pdf',1,'com_content','article',10,'file'),(2,'datos.ODT',3,'com_content','category',20,'file'),(3,'viejo.doc',1,'com_content','article',10,'file'),(4,'externo.pdf',1,'com_content','article',10,'url')");
     $url = 'index.php?option=com_attachments&view=acsattachment&id=1';
     reportSql('INSERT INTO #__finder_links VALUES (' . $db->quote($url) . ')');
     // Duplicate Finder rows must not inflate attachment counts.

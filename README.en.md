@@ -44,7 +44,7 @@ Searching for **fishing** can find a document whose filename does not contain th
 - CSV: headers and values, with comma or semicolon separators.
 - Legacy DOC files, encrypted files, external links and attachments from other components are not processed.
 - Empty documents and extraction failures are skipped. Logs contain only the attachment ID and error type, without contents or paths.
-- Default limit: **20 MB per file**, configurable up to 100 MB. Uncompressed DOCX XML: 32 MB. Text: two million characters; excess text is truncated.
+- Default limit: **20 MB per file**, configurable up to 100 MB. Uncompressed DOCX and ODT XML: 32 MB. Text: two million characters; excess text is truncated.
 - Extraction runs on your server. Complex PDFs may need more memory/time; use console indexing for large collections.
 
 Smart Search tokenisation is used, including its word, phrase and matching options. To match **personnel** with a word prefix, enable Joomla's word-prefix matching. See the [word matching guide (Spanish)](docs/SEARCH_BEHAVIOUR.md).
@@ -63,7 +63,7 @@ Smart Search automatic suggestions and alternative-query suggestions are disable
 
 Search and download pages are excluded from Joomla page caching and send **Cache-Control: private, no-store**. Other pages keep their cache. Third-party caches, proxies and CDNs must respect these exclusions. Clear any old search cache after installation.
 
-Downloading a local com_content DOCX/PDF checks the attachment and its parents again. Attachments delivers the file through its normal controller. Physical paths and extracted-text copies are not published.
+Downloading a supported local com_content attachment checks the attachment and its parents again. Attachments delivers the file through its normal controller. Physical paths and extracted-text copies are not published.
 
 The index contains extracted text: protect it alongside the database and backups.
 
@@ -74,6 +74,8 @@ Attachments save, delete and state-change events update index entries when Jooml
 For imports or direct changes to files/database:
 
     php cli/joomla.php finder:index
+
+After upgrading, reindex to include existing attachments in the new formats. If you use the queue, run `refresh` before processing it to revisit previously skipped attachments.
 
 External content changes require reindexing; permissions and publication are checked on every search.
 
@@ -115,7 +117,7 @@ GitHub Actions runs tests on PHP 8.3 and 8.4 and publishes the installer as an a
 
 ### Validation in your Joomla installation
 
-- Upload DOCX and PDF files containing **fishing** only inside the document.
+- Upload a file of each supported format containing **fishing** only inside the document.
 - Test as a visitor, an authorised user and a user from a different group.
 - Check titles, snippets, totals, pagination and downloads.
 - Remove attachment access without reindexing: it must disappear and downloads must be denied.
@@ -137,7 +139,7 @@ Independent project; not an official Joomla or Attachments publication.
 
 Open **Components → Attachments Content Search** for a global per-level summary and paginated listing. Search by filename or article/category title; filter by access, index/queue state and source page type or ID. Links let authorised users view or edit source articles and categories. The section and module require management access to Attachments Content Search, Smart Search and Content. Configure the component's own permissions in Options.
 
-The optional **Attachments Content Search — Summary** module can be published in cpanel. It displays included access levels, indexed/unindexed counts for local article/category PDF/DOCX files, and a link to the full section. Updating an existing module adopts the concise layout.
+The optional **Attachments Content Search — Summary** module can be published in cpanel. It displays included access levels, indexed/unindexed counts for supported local article/category files, and a link to the full section. Updating an existing module adopts the concise layout.
 
 This administration feature creates no tables and does not modify the index or queue. Indexed means a Smart Search entry exists; it does not guarantee public visibility. Article and ancestor-category permissions still apply to search and download. Do not add queue counts to indexed counts. Files without a queue state are not labelled pending.
 

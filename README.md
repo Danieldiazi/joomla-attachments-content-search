@@ -44,7 +44,7 @@ Una búsqueda de **pesca** puede encontrar un documento cuyo nombre no contiene 
 - CSV: cabeceras y valores, con separador coma o punto y coma.
 - No procesa DOC antiguos, archivos cifrados, enlaces externos ni adjuntos de otros componentes.
 - Un documento vacío o que falla al extraer se omite. Se registra únicamente su ID y el tipo de error, sin contenido ni rutas.
-- Límite predeterminado: **20 MB por archivo**, configurable hasta 100 MB. XML DOCX descomprimido: 32 MB. Texto: 2 millones de caracteres, truncando el exceso.
+- Límite predeterminado: **20 MB por archivo**, configurable hasta 100 MB. XML descomprimido de DOCX y ODT: 32 MB. Texto: 2 millones de caracteres, truncando el exceso.
 - La extracción se realiza en tu servidor. Los PDF complejos pueden necesitar más memoria/tiempo; usa indexación por consola para colecciones grandes.
 
 Se utiliza la tokenización de Smart Search (palabras, frases y sus opciones de coincidencia). Para que **personal** encuentre también **personales**, activa la coincidencia por inicio de palabra en las opciones de Joomla. Consulta la [guía de coincidencia de palabras](docs/SEARCH_BEHAVIOUR.md).
@@ -74,6 +74,8 @@ Los eventos de guardado, borrado y cambio de estado de Attachments actualizan su
 Para importaciones o cambios efectuados directamente en disco/base de datos:
 
     php cli/joomla.php finder:index
+
+Tras actualizar el plugin, reindexa para incorporar los nuevos formatos ya subidos. Si usas la cola, ejecuta `refresh` antes de procesarla para volver a incluir los adjuntos que se habían omitido.
 
 Los cambios externos de contenido requieren reindexar; los permisos y publicación se comprueban en cada búsqueda.
 
@@ -114,7 +116,7 @@ GitHub Actions ejecuta las pruebas en PHP 8.3 y 8.4 y publica el ZIP como artefa
 
 ### Validación en tu Joomla
 
-- Sube DOCX y PDF con la palabra **pesca** solo en su interior.
+- Sube un archivo de cada formato con la palabra **pesca** solo en su interior.
 - Prueba con visitante, usuario autorizado y usuario de otro grupo.
 - Comprueba títulos, fragmentos, totales, páginas y descargas.
 - Retira acceso al adjunto sin reindexar: debe desaparecer y denegar su descarga.
