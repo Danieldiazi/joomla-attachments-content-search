@@ -40,7 +40,7 @@ final class AccessPolicy
         $query = self::attachmentQuery($db, $levels, $now);
         $query->where(IndexSelection::load($db)->condition());
         $query->where('l.url = ' . $db->createQuery()->concatenate([$db->quote(self::URL_PREFIX), 'a.id']));
-        $query->where('(LOWER(a.filename) LIKE ' . $db->quote('%.docx') . ' OR LOWER(a.filename) LIKE ' . $db->quote('%.pdf') . ')');
+        $query->where(AttachmentFormats::condition($db));
         return '(' . $normal . ' OR (l.access = 0 AND l.url LIKE ' . $prefix . ' AND EXISTS (' . $query . ')))';
     }
 }
